@@ -1,11 +1,17 @@
 package com.ap.chickeninvaders;
 
+import com.ap.chickeninvaders.ui.LoginPanel;
+import com.ap.chickeninvaders.ui.MainMenuPanel;
+import com.ap.chickeninvaders.ui.PlaceholderPanel;
+import com.ap.chickeninvaders.ui.RegisterPanel;
+
 import javax.swing.*;
 import java.awt.*;
 
 public class GameMain extends JFrame {
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel root = new JPanel(cardLayout);
+    private String currentUsername;
 
     public GameMain() {
         super("Chicken Invaders AP");
@@ -15,66 +21,37 @@ public class GameMain extends JFrame {
         setLocationRelativeTo(null);
         setContentPane(root);
 
-        root.add(createMainMenu(), "menu");
-        root.add(createPlaceholderPanel("Login/Register will be added later."), "login");
-        root.add(createPlaceholderPanel("High Scores will be added later."), "scores");
-        root.add(createPlaceholderPanel("Settings will be added later."), "settings");
-        root.add(createPlaceholderPanel("How to Play will be added later."), "how");
+        addScreen("menu", new MainMenuPanel(this));
+        addScreen("login", new LoginPanel(this));
+        addScreen("register", new RegisterPanel(this));
+        addScreen("scores", new PlaceholderPanel(this, "High Scores will be added later."));
+        addScreen("settings", new PlaceholderPanel(this, "Sound Settings will be added later."));
+        addScreen("how", new PlaceholderPanel(this, "How to Play will be completed later."));
     }
 
-    private JPanel createMainMenu() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(new Color(12, 14, 34));
-
-        JPanel buttons = new JPanel(new GridLayout(0, 1, 10, 10));
-        buttons.setOpaque(false);
-        buttons.setPreferredSize(new Dimension(260, 330));
-
-        JLabel title = new JLabel("Chicken Invaders", SwingConstants.CENTER);
-        title.setForeground(Color.WHITE);
-        title.setFont(title.getFont().deriveFont(Font.BOLD, 30f));
-
-        JButton newGame = new JButton("New Game");
-        JButton highScores = new JButton("High Scores");
-        JButton settings = new JButton("Settings");
-        JButton howToPlay = new JButton("How to Play");
-        JButton exit = new JButton("Exit");
-
-        newGame.addActionListener(e -> showScreen("login"));
-        highScores.addActionListener(e -> showScreen("scores"));
-        settings.addActionListener(e -> showScreen("settings"));
-        howToPlay.addActionListener(e -> showScreen("how"));
-        exit.addActionListener(e -> System.exit(0));
-
-        buttons.add(title);
-        buttons.add(newGame);
-        buttons.add(highScores);
-        buttons.add(settings);
-        buttons.add(howToPlay);
-        buttons.add(exit);
-
-        panel.add(buttons);
-        return panel;
+    public void addScreen(String name, JPanel panel) {
+        root.add(panel, name);
     }
 
-    private JPanel createPlaceholderPanel(String text) {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(new Color(10, 14, 30));
-
-        JLabel label = new JLabel(text, SwingConstants.CENTER);
-        label.setForeground(Color.WHITE);
-        label.setFont(label.getFont().deriveFont(Font.BOLD, 22f));
-
-        JButton back = new JButton("Back to Menu");
-        back.addActionListener(e -> showScreen("menu"));
-
-        panel.add(label, BorderLayout.CENTER);
-        panel.add(back, BorderLayout.SOUTH);
-        return panel;
-    }
-
-    private void showScreen(String name) {
+    public void showScreen(String name) {
         cardLayout.show(root, name);
+    }
+
+    public void setCurrentUsername(String username) {
+        this.currentUsername = username;
+    }
+
+    public String getCurrentUsername() {
+        return currentUsername;
+    }
+
+    public void startNewGame() {
+        if (currentUsername == null || currentUsername.isBlank()) {
+            JOptionPane.showMessageDialog(this, "Please login or register first.");
+            showScreen("login");
+            return;
+        }
+        JOptionPane.showMessageDialog(this, "GamePanel will be added in the next days.");
     }
 
     public static void main(String[] args) {
