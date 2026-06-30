@@ -1,6 +1,6 @@
 # Chicken Invaders AP Project
 
-Student: Write your full name here.
+Student: Aylin Zarrinbakhsh
 
 ## Day 1
 
@@ -47,4 +47,4 @@ Game controls will be added after the game panel is created.
 
 ## GitHub
 
-Repository link: paste your GitHub link here.
+Repository link: https://github.com/ayliinzarrin-cmd/Chicken-invaders-AP
