@@ -1,6 +1,7 @@
 package com.ap.chickeninvaders.ui;
 
 import com.ap.chickeninvaders.GameMain;
+import com.ap.chickeninvaders.model.User;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,8 +37,14 @@ public class LoginPanel extends JPanel {
                 JOptionPane.showMessageDialog(this, "Please enter username and password.");
                 return;
             }
-            app.setCurrentUsername(username);
-            JOptionPane.showMessageDialog(this, "Logged in as " + username + ".");
+            User user = app.getDatabaseManager().login(username, password);
+            if (user == null) {
+                JOptionPane.showMessageDialog(this, "Wrong username or password.");
+                return;
+            }
+
+            app.setCurrentUser(user);
+            JOptionPane.showMessageDialog(this, "Logged in as " + user.getUsername() + ".");
             app.showScreen("menu");
         });
 
@@ -45,4 +52,3 @@ public class LoginPanel extends JPanel {
         add(form);
     }
 }
-

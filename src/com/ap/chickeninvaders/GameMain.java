@@ -4,6 +4,8 @@ import com.ap.chickeninvaders.ui.LoginPanel;
 import com.ap.chickeninvaders.ui.MainMenuPanel;
 import com.ap.chickeninvaders.ui.PlaceholderPanel;
 import com.ap.chickeninvaders.ui.RegisterPanel;
+import com.ap.chickeninvaders.db.DatabaseManager;
+import com.ap.chickeninvaders.model.User;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,7 +13,8 @@ import java.awt.*;
 public class GameMain extends JFrame {
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel root = new JPanel(cardLayout);
-    private String currentUsername;
+    private final DatabaseManager databaseManager = new DatabaseManager();
+    private User currentUser;
 
     public GameMain() {
         super("Chicken Invaders AP");
@@ -37,21 +40,25 @@ public class GameMain extends JFrame {
         cardLayout.show(root, name);
     }
 
-    public void setCurrentUsername(String username) {
-        this.currentUsername = username;
+    public DatabaseManager getDatabaseManager() {
+        return databaseManager;
     }
 
-    public String getCurrentUsername() {
-        return currentUsername;
+    public void setCurrentUser(User user) {
+        this.currentUser = user;
+    }
+
+    public User getCurrentUser() {
+        return currentUser;
     }
 
     public void startNewGame() {
-        if (currentUsername == null || currentUsername.isBlank()) {
+        if (currentUser == null) {
             JOptionPane.showMessageDialog(this, "Please login or register first.");
             showScreen("login");
             return;
         }
-        JOptionPane.showMessageDialog(this, "GamePanel will be added in the next days.");
+        JOptionPane.showMessageDialog(this, "GamePanel will be added soon for " + currentUser.getUsername() + ".");
     }
 
     public static void main(String[] args) {
@@ -61,4 +68,3 @@ public class GameMain extends JFrame {
         });
     }
 }
-

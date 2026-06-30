@@ -46,13 +46,17 @@ public class RegisterPanel extends JPanel {
                 return;
             }
 
-            app.setCurrentUsername(username);
-            JOptionPane.showMessageDialog(this, "Registered as " + username + ".");
-            app.showScreen("menu");
+            boolean registered = app.getDatabaseManager().register(username, password);
+            if (!registered) {
+                JOptionPane.showMessageDialog(this, "This username already exists or input is invalid.");
+                return;
+            }
+
+            JOptionPane.showMessageDialog(this, "Registered successfully. Now login.");
+            app.showScreen("login");
         });
 
         backButton.addActionListener(e -> app.showScreen("menu"));
         add(form);
     }
 }
-
