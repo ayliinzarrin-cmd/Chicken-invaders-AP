@@ -5,6 +5,7 @@ import com.ap.chickeninvaders.ui.MainMenuPanel;
 import com.ap.chickeninvaders.ui.PlaceholderPanel;
 import com.ap.chickeninvaders.ui.RegisterPanel;
 import com.ap.chickeninvaders.db.DatabaseManager;
+import com.ap.chickeninvaders.game.GamePanel;
 import com.ap.chickeninvaders.model.User;
 
 import javax.swing.*;
@@ -58,7 +59,10 @@ public class GameMain extends JFrame {
             showScreen("login");
             return;
         }
-        JOptionPane.showMessageDialog(this, "GamePanel will be added soon for " + currentUser.getUsername() + ".");
+        GamePanel gamePanel = new GamePanel(this, currentUser);
+        root.add(gamePanel, "game");
+        showScreen("game");
+        gamePanel.requestFocusInWindow();
     }
 
     public static void main(String[] args) {

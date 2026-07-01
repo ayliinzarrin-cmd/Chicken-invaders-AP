@@ -1,6 +1,6 @@
 # Chicken Invaders AP Project
 
-Student: Aylin Zarrinbakhsh
+Student: Write your full name here.
 
 ## Day 1
 
@@ -27,12 +27,25 @@ Added a simple text-file database for users:
 - Real login with password check
 - User data is saved in `data/users.txt`
 
+## Day 4
+
+Added the first playable game screen:
+
+- `GamePanel`
+- `Plane`
+- `Bullet`
+- 60 FPS Swing timer
+- Keyboard movement with WASD / arrow keys
+- Shooting with Space
+- Pause with P
+- Return to menu with Esc
+
 ## How to Run
 
 Compile:
 
 ```bash
-javac -encoding UTF-8 -d out src/com/ap/chickeninvaders/*.java src/com/ap/chickeninvaders/ui/*.java src/com/ap/chickeninvaders/model/*.java src/com/ap/chickeninvaders/db/*.java
+javac -encoding UTF-8 -d out src/com/ap/chickeninvaders/*.java src/com/ap/chickeninvaders/ui/*.java src/com/ap/chickeninvaders/model/*.java src/com/ap/chickeninvaders/db/*.java src/com/ap/chickeninvaders/game/*.java
 ```
 
 Run:
@@ -43,8 +56,11 @@ java -cp out com.ap.chickeninvaders.GameMain
 
 ## Controls
 
-Game controls will be added after the game panel is created.
+- Arrow keys / WASD: move
+- Space: shoot
+- P: pause/resume
+- Esc: return to menu
 
 ## GitHub
 
-Repository link: https://github.com/ayliinzarrin-cmd/Chicken-invaders-AP
+Repository link: paste your GitHub link here.
