@@ -40,6 +40,17 @@ Added the first playable game screen:
 - Pause with P
 - Return to menu with Esc
 
+## Day 5
+
+Added the first enemy system:
+
+- `Enemy` class
+- 5 row by 8 column enemy grid
+- Enemies move left and right together
+- Enemies move down when they touch the screen edge
+- Bullet-enemy collision
+- Score increases by 10 when an enemy is destroyed
+
 ## How to Run
 
 Compile:

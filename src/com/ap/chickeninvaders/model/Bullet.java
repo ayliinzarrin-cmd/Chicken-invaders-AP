@@ -20,9 +20,12 @@ public class Bullet {
         return y < -20;
     }
 
+    public Rectangle getBounds() {
+        return new Rectangle(x - 3, y - 12, 6, 16);
+    }
+
     public void draw(Graphics2D g) {
         g.setColor(new Color(100, 240, 255));
         g.fillRoundRect(x - 3, y - 12, 6, 16, 6, 6);
     }
 }
-

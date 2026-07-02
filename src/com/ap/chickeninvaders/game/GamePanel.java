@@ -2,6 +2,7 @@ package com.ap.chickeninvaders.game;
 
 import com.ap.chickeninvaders.GameMain;
 import com.ap.chickeninvaders.model.Bullet;
+import com.ap.chickeninvaders.model.Enemy;
 import com.ap.chickeninvaders.model.Plane;
 import com.ap.chickeninvaders.model.User;
 
@@ -19,6 +20,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private final boolean[] keys = new boolean[256];
     private final Plane plane = new Plane(380, 500);
     private final List<Bullet> bullets = new ArrayList<>();
+    private final List<Enemy> enemies = new ArrayList<>();
+    private int enemyDirection = 1;
+    private int score;
     private boolean paused;
 
     public GamePanel(GameMain app, User user) {
@@ -27,7 +31,22 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         setFocusable(true);
         setBackground(Color.BLACK);
         addKeyListener(this);
+        createEnemyGrid();
         timer.start();
+    }
+
+    private void createEnemyGrid() {
+        enemies.clear();
+        int startX = 95;
+        int startY = 85;
+        int gapX = 72;
+        int gapY = 48;
+
+        for (int row = 0; row < 5; row++) {
+            for (int col = 0; col < 8; col++) {
+                enemies.add(new Enemy(startX + col * gapX, startY + row * gapY));
+            }
+        }
     }
 
     @Override
@@ -59,6 +78,47 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 iterator.remove();
             }
         }
+
+        updateEnemies();
+        checkBulletEnemyCollisions();
+    }
+
+    private void updateEnemies() {
+        boolean hitEdge = false;
+        int speed = 1;
+
+        for (Enemy enemy : enemies) {
+            enemy.move(enemyDirection * speed);
+            Rectangle bounds = enemy.getBounds();
+            if (bounds.x < 10 || bounds.x + bounds.width > getWidth() - 10) {
+                hitEdge = true;
+            }
+        }
+
+        if (hitEdge) {
+            enemyDirection *= -1;
+            for (Enemy enemy : enemies) {
+                enemy.moveDown(20);
+            }
+        }
+    }
+
+    private void checkBulletEnemyCollisions() {
+        Iterator<Bullet> bulletIterator = bullets.iterator();
+        while (bulletIterator.hasNext()) {
+            Bullet bullet = bulletIterator.next();
+
+            Iterator<Enemy> enemyIterator = enemies.iterator();
+            while (enemyIterator.hasNext()) {
+                Enemy enemy = enemyIterator.next();
+                if (bullet.getBounds().intersects(enemy.getBounds())) {
+                    bulletIterator.remove();
+                    enemyIterator.remove();
+                    score += 10;
+                    return;
+                }
+            }
+        }
     }
 
     @Override
@@ -72,6 +132,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         plane.draw(g2);
         for (Bullet bullet : bullets) {
             bullet.draw(g2);
+        }
+        for (Enemy enemy : enemies) {
+            enemy.draw(g2);
         }
 
         if (paused) {
@@ -99,8 +162,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         g2.fillRoundRect(12, 10, 360, 44, 8, 8);
         g2.setColor(Color.BLACK);
         g2.drawString("User: " + user.getUsername(), 24, 30);
-        g2.drawString("Day 4: Movement + Shooting", 160, 30);
-        g2.drawString("P: Pause   Esc: Menu", 24, 48);
+        g2.drawString("Score: " + score, 160, 30);
+        g2.drawString("Enemies: " + enemies.size(), 250, 30);
+        g2.drawString("Day 5: Enemy Grid + Collision", 24, 48);
     }
 
     private boolean isPressed(int keyCode) {
@@ -136,4 +200,3 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     public void keyTyped(KeyEvent e) {
     }
 }
-
