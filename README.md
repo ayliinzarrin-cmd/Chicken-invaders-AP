@@ -51,6 +51,17 @@ Added the first enemy system:
 - Bullet-enemy collision
 - Score increases by 10 when an enemy is destroyed
 
+## Day 6
+
+Added early gameplay progression:
+
+- Levels 1 to 3
+- Enemy types: Normal, Fast, Zigzag
+- Enemy eggs
+- Plane lives
+- Egg-plane collision
+- Level clear bonus score
+
 ## How to Run
 
 Compile:

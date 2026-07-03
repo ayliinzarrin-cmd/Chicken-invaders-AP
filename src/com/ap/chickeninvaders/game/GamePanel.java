@@ -2,7 +2,9 @@ package com.ap.chickeninvaders.game;
 
 import com.ap.chickeninvaders.GameMain;
 import com.ap.chickeninvaders.model.Bullet;
+import com.ap.chickeninvaders.model.Egg;
 import com.ap.chickeninvaders.model.Enemy;
+import com.ap.chickeninvaders.model.EnemyType;
 import com.ap.chickeninvaders.model.Plane;
 import com.ap.chickeninvaders.model.User;
 
@@ -12,6 +14,7 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 
 public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private final GameMain app;
@@ -21,8 +24,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private final Plane plane = new Plane(380, 500);
     private final List<Bullet> bullets = new ArrayList<>();
     private final List<Enemy> enemies = new ArrayList<>();
+    private final List<Egg> eggs = new ArrayList<>();
+    private final Random random = new Random();
     private int enemyDirection = 1;
     private int score;
+    private int level = 1;
+    private long lastEggTime;
     private boolean paused;
 
     public GamePanel(GameMain app, User user) {
@@ -31,12 +38,17 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         setFocusable(true);
         setBackground(Color.BLACK);
         addKeyListener(this);
-        createEnemyGrid();
+        startLevel(1);
         timer.start();
     }
 
-    private void createEnemyGrid() {
+    private void startLevel(int nextLevel) {
+        level = nextLevel;
         enemies.clear();
+        bullets.clear();
+        eggs.clear();
+        enemyDirection = 1;
+
         int startX = 95;
         int startY = 85;
         int gapX = 72;
@@ -44,9 +56,19 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         for (int row = 0; row < 5; row++) {
             for (int col = 0; col < 8; col++) {
-                enemies.add(new Enemy(startX + col * gapX, startY + row * gapY));
+                enemies.add(new Enemy(startX + col * gapX, startY + row * gapY, enemyTypeFor(row, col)));
             }
         }
+    }
+
+    private EnemyType enemyTypeFor(int row, int col) {
+        if (level == 1) {
+            return EnemyType.NORMAL;
+        }
+        if (level == 2) {
+            return (row + col) % 3 == 0 ? EnemyType.FAST : EnemyType.NORMAL;
+        }
+        return (row + col) % 2 == 0 ? EnemyType.ZIGZAG : EnemyType.NORMAL;
     }
 
     @Override
@@ -80,12 +102,14 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
 
         updateEnemies();
+        updateEggs();
         checkBulletEnemyCollisions();
+        checkEggPlaneCollisions();
     }
 
     private void updateEnemies() {
         boolean hitEdge = false;
-        int speed = 1;
+        int speed = level == 1 ? 1 : 2;
 
         for (Enemy enemy : enemies) {
             enemy.move(enemyDirection * speed);
@@ -101,6 +125,25 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 enemy.moveDown(20);
             }
         }
+
+        long now = System.currentTimeMillis();
+        long eggDelay = level == 1 ? 2500 : level == 2 ? 1800 : 1400;
+        if (!enemies.isEmpty() && now - lastEggTime > eggDelay) {
+            Enemy enemy = enemies.get(random.nextInt(enemies.size()));
+            eggs.add(new Egg(enemy.centerX(), enemy.centerY()));
+            lastEggTime = now;
+        }
+    }
+
+    private void updateEggs() {
+        Iterator<Egg> iterator = eggs.iterator();
+        while (iterator.hasNext()) {
+            Egg egg = iterator.next();
+            egg.update();
+            if (egg.isOutOfScreen(getHeight())) {
+                iterator.remove();
+            }
+        }
     }
 
     private void checkBulletEnemyCollisions() {
@@ -114,10 +157,41 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 if (bullet.getBounds().intersects(enemy.getBounds())) {
                     bulletIterator.remove();
                     enemyIterator.remove();
-                    score += 10;
+                    score += enemy.getScore();
+                    if (enemies.isEmpty()) {
+                        finishLevel();
+                    }
                     return;
                 }
             }
+        }
+    }
+
+    private void checkEggPlaneCollisions() {
+        Iterator<Egg> iterator = eggs.iterator();
+        while (iterator.hasNext()) {
+            Egg egg = iterator.next();
+            if (egg.getBounds().intersects(plane.getBounds())) {
+                iterator.remove();
+                plane.loseLife();
+                if (plane.getLives() <= 0) {
+                    timer.stop();
+                    JOptionPane.showMessageDialog(this, "Game Over! Score: " + score);
+                    app.showScreen("menu");
+                }
+                return;
+            }
+        }
+    }
+
+    private void finishLevel() {
+        score += 200;
+        if (level < 3) {
+            JOptionPane.showMessageDialog(this, "Level " + level + " cleared!");
+            startLevel(level + 1);
+        } else {
+            JOptionPane.showMessageDialog(this, "Day 6 complete! Boss will be added later.");
+            startLevel(1);
         }
     }
 
@@ -135,6 +209,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
         for (Enemy enemy : enemies) {
             enemy.draw(g2);
+        }
+        for (Egg egg : eggs) {
+            egg.draw(g2);
         }
 
         if (paused) {
@@ -162,9 +239,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         g2.fillRoundRect(12, 10, 360, 44, 8, 8);
         g2.setColor(Color.BLACK);
         g2.drawString("User: " + user.getUsername(), 24, 30);
-        g2.drawString("Score: " + score, 160, 30);
-        g2.drawString("Enemies: " + enemies.size(), 250, 30);
-        g2.drawString("Day 5: Enemy Grid + Collision", 24, 48);
+        g2.drawString("Score: " + score, 150, 30);
+        g2.drawString("Level: " + level, 240, 30);
+        g2.drawString("Lives: " + plane.getLives(), 310, 30);
+        g2.drawString("Enemies: " + enemies.size(), 24, 48);
+        g2.drawString("Day 6: Levels + Eggs", 130, 48);
     }
 
     private boolean isPressed(int keyCode) {

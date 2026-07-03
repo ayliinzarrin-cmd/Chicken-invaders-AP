@@ -7,14 +7,23 @@ public class Enemy {
     private int y;
     private final int width = 42;
     private final int height = 34;
+    private final EnemyType type;
+    private double zigzagPhase;
 
-    public Enemy(int x, int y) {
+    public Enemy(int x, int y, EnemyType type) {
         this.x = x;
         this.y = y;
+        this.type = type;
     }
 
     public void move(int dx) {
-        x += dx;
+        int realDx = type == EnemyType.FAST ? dx * 2 : dx;
+        x += realDx;
+
+        if (type == EnemyType.ZIGZAG) {
+            zigzagPhase += 0.18;
+            y += (int) Math.round(Math.sin(zigzagPhase));
+        }
     }
 
     public void moveDown(int dy) {
@@ -25,8 +34,20 @@ public class Enemy {
         return new Rectangle(x, y, width, height);
     }
 
+    public int centerX() {
+        return x + width / 2;
+    }
+
+    public int centerY() {
+        return y + height / 2;
+    }
+
+    public int getScore() {
+        return type.getScore();
+    }
+
     public void draw(Graphics2D g) {
-        g.setColor(new Color(245, 225, 90));
+        g.setColor(type.getColor());
         g.fillOval(x, y, width, height);
 
         g.setColor(new Color(255, 80, 60));
@@ -44,4 +65,3 @@ public class Enemy {
         );
     }
 }
-

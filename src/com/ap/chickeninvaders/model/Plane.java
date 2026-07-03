@@ -11,6 +11,7 @@ public class Plane {
     private final int width = 46;
     private final int height = 42;
     private final int speed = 5;
+    private int lives = 3;
     private long lastShotTime;
 
     public Plane(int x, int y) {
@@ -47,6 +48,18 @@ public class Plane {
         return bullets;
     }
 
+    public Rectangle getBounds() {
+        return new Rectangle(x + 6, y + 6, width - 12, height - 8);
+    }
+
+    public void loseLife() {
+        lives = Math.max(0, lives - 1);
+    }
+
+    public int getLives() {
+        return lives;
+    }
+
     private boolean isPressed(boolean[] keys, int keyCode) {
         return keyCode >= 0 && keyCode < keys.length && keys[keyCode];
     }
@@ -64,4 +77,3 @@ public class Plane {
         g.fillOval(x + width / 2 - 6, y + 12, 12, 12);
     }
 }
-
