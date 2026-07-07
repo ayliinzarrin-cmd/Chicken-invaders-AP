@@ -2,6 +2,7 @@ package com.ap.chickeninvaders.game;
 
 import com.ap.chickeninvaders.GameMain;
 import com.ap.chickeninvaders.model.Bullet;
+import com.ap.chickeninvaders.model.Boss;
 import com.ap.chickeninvaders.model.Egg;
 import com.ap.chickeninvaders.model.Enemy;
 import com.ap.chickeninvaders.model.EnemyType;
@@ -26,6 +27,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private final List<Enemy> enemies = new ArrayList<>();
     private final List<Egg> eggs = new ArrayList<>();
     private final Random random = new Random();
+    private Boss boss;
     private int enemyDirection = 1;
     private int score;
     private int level = 1;
@@ -48,7 +50,13 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         enemies.clear();
         bullets.clear();
         eggs.clear();
+        boss = null;
         enemyDirection = 1;
+
+        if (level == 4) {
+            boss = new Boss();
+            return;
+        }
 
         int startX = 95;
         int startY = 85;
@@ -102,10 +110,20 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             }
         }
 
-        updateEnemies();
+        if (boss == null) {
+            updateEnemies();
+            checkBulletEnemyCollisions();
+        } else {
+            updateBoss();
+            checkBulletBossCollisions();
+        }
         updateEggs();
-        checkBulletEnemyCollisions();
         checkEggPlaneCollisions();
+    }
+
+    private void updateBoss() {
+        boss.update(getWidth());
+        eggs.addAll(boss.tryShoot(System.currentTimeMillis()));
     }
 
     private void updateEnemies() {
@@ -168,6 +186,23 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
     }
 
+    private void checkBulletBossCollisions() {
+        Iterator<Bullet> bulletIterator = bullets.iterator();
+        while (bulletIterator.hasNext()) {
+            Bullet bullet = bulletIterator.next();
+            if (bullet.getBounds().intersects(boss.getBounds())) {
+                bulletIterator.remove();
+                boss.damage(1);
+                if (boss.isDead()) {
+                    score += 500;
+                    JOptionPane.showMessageDialog(this, "Boss defeated! Day 8 complete.");
+                    endGame("BOSS_4_CLEAR");
+                }
+                return;
+            }
+        }
+    }
+
     private void checkEggPlaneCollisions() {
         Iterator<Egg> iterator = eggs.iterator();
         while (iterator.hasNext()) {
@@ -189,8 +224,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             JOptionPane.showMessageDialog(this, "Level " + level + " cleared!");
             startLevel(level + 1);
         } else {
-            JOptionPane.showMessageDialog(this, "Day 7 complete! Boss will be added later.");
-            endGame("LEVEL_3_CLEAR");
+            JOptionPane.showMessageDialog(this, "Level 3 cleared! Boss fight starts.");
+            startLevel(4);
         }
     }
 
@@ -219,6 +254,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
         for (Enemy enemy : enemies) {
             enemy.draw(g2);
+        }
+        if (boss != null) {
+            boss.draw(g2);
         }
         for (Egg egg : eggs) {
             egg.draw(g2);
@@ -253,7 +291,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         g2.drawString("Level: " + level, 240, 30);
         g2.drawString("Lives: " + plane.getLives(), 310, 30);
         g2.drawString("Enemies: " + enemies.size(), 24, 48);
-        g2.drawString("Day 7: Save Game Records", 130, 48);
+        g2.drawString("Day 8: Level 4 Boss", 130, 48);
     }
 
     private boolean isPressed(int keyCode) {

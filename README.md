@@ -72,6 +72,18 @@ Added game state and saving game results:
 - Save username, score, level reached, status, and timestamp
 - Update user's high score and last level
 
+## Day 8
+
+Added the first boss fight:
+
+- `Boss` class
+- Level 4 boss after clearing level 3
+- Boss has 50 HP
+- Boss health bar
+- Boss moves left/right and slightly up/down
+- Boss shoots eggs in 4 directions every 1.5 seconds
+- Defeating the boss gives 500 bonus score
+
 ## How to Run
 
 Compile:
