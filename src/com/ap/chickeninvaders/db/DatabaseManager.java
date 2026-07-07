@@ -4,12 +4,15 @@ import com.ap.chickeninvaders.model.User;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DatabaseManager {
     private final File dataDirectory = new File("data");
     private final File usersFile = new File(dataDirectory, "users.txt");
+    private final File recordsFile = new File(dataDirectory, "game_records.txt");
 
     public DatabaseManager() {
         initialize();
@@ -22,6 +25,9 @@ public class DatabaseManager {
             }
             if (!usersFile.exists()) {
                 usersFile.createNewFile();
+            }
+            if (!recordsFile.exists()) {
+                recordsFile.createNewFile();
             }
         } catch (IOException e) {
             throw new RuntimeException("Could not initialize database files.", e);
@@ -85,6 +91,26 @@ public class DatabaseManager {
             users.add(updatedUser);
         }
         writeUsers(users);
+    }
+
+    public void saveGameRecord(User user, int score, int levelReached, String status) {
+        String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        String line = user.getUsername() + "|" + score + "|" + levelReached + "|" + status + "|" + time;
+
+        try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(
+                new FileOutputStream(recordsFile, true), StandardCharsets.UTF_8))) {
+            writer.println(line);
+        } catch (IOException e) {
+            throw new RuntimeException("Could not save game record.", e);
+        }
+
+        if (score > user.getHighScore()) {
+            user.setHighScore(score);
+        }
+        if (levelReached > user.getLastLevel()) {
+            user.setLastLevel(levelReached);
+        }
+        updateUser(user);
     }
 
     private List<User> readUsers() {

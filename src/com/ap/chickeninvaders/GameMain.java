@@ -65,6 +65,14 @@ public class GameMain extends JFrame {
         gamePanel.requestFocusInWindow();
     }
 
+    public void finishGame(int score, int levelReached, String status) {
+        if (currentUser != null) {
+            databaseManager.saveGameRecord(currentUser, score, levelReached, status);
+            currentUser = databaseManager.findUser(currentUser.getUsername());
+        }
+        showScreen("menu");
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             GameMain app = new GameMain();

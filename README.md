@@ -62,6 +62,16 @@ Added early gameplay progression:
 - Egg-plane collision
 - Level clear bonus score
 
+## Day 7
+
+Added game state and saving game results:
+
+- `GameState` enum
+- Cleaner pause/game-over state
+- Save each finished game in `data/game_records.txt`
+- Save username, score, level reached, status, and timestamp
+- Update user's high score and last level
+
 ## How to Run
 
 Compile:

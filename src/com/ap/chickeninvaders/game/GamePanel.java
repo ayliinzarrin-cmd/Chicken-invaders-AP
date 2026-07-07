@@ -30,7 +30,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private int score;
     private int level = 1;
     private long lastEggTime;
-    private boolean paused;
+    private GameState state = GameState.RUNNING;
+    private boolean saved;
 
     public GamePanel(GameMain app, User user) {
         this.app = app;
@@ -79,7 +80,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!paused) {
+        if (state == GameState.RUNNING) {
             updateGame();
         }
         repaint();
@@ -175,9 +176,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 iterator.remove();
                 plane.loseLife();
                 if (plane.getLives() <= 0) {
-                    timer.stop();
-                    JOptionPane.showMessageDialog(this, "Game Over! Score: " + score);
-                    app.showScreen("menu");
+                    endGame("GAME_OVER");
                 }
                 return;
             }
@@ -190,9 +189,20 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             JOptionPane.showMessageDialog(this, "Level " + level + " cleared!");
             startLevel(level + 1);
         } else {
-            JOptionPane.showMessageDialog(this, "Day 6 complete! Boss will be added later.");
-            startLevel(1);
+            JOptionPane.showMessageDialog(this, "Day 7 complete! Boss will be added later.");
+            endGame("LEVEL_3_CLEAR");
         }
+    }
+
+    private void endGame(String status) {
+        if (saved) {
+            return;
+        }
+        saved = true;
+        state = GameState.GAME_OVER;
+        timer.stop();
+        JOptionPane.showMessageDialog(this, status + "\nScore: " + score);
+        app.finishGame(score, level, status);
     }
 
     @Override
@@ -214,7 +224,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             egg.draw(g2);
         }
 
-        if (paused) {
+        if (state == GameState.PAUSED) {
             g2.setColor(new Color(0, 0, 0, 150));
             g2.fillRect(0, 0, getWidth(), getHeight());
             g2.setColor(Color.WHITE);
@@ -243,7 +253,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         g2.drawString("Level: " + level, 240, 30);
         g2.drawString("Lives: " + plane.getLives(), 310, 30);
         g2.drawString("Enemies: " + enemies.size(), 24, 48);
-        g2.drawString("Day 6: Levels + Eggs", 130, 48);
+        g2.drawString("Day 7: Save Game Records", 130, 48);
     }
 
     private boolean isPressed(int keyCode) {
@@ -258,12 +268,15 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
 
         if (code == KeyEvent.VK_P) {
-            paused = !paused;
+            if (state == GameState.RUNNING) {
+                state = GameState.PAUSED;
+            } else if (state == GameState.PAUSED) {
+                state = GameState.RUNNING;
+            }
         }
 
         if (code == KeyEvent.VK_ESCAPE) {
-            timer.stop();
-            app.showScreen("menu");
+            endGame("ESCAPE");
         }
     }
 
