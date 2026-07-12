@@ -32,6 +32,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private int score;
     private int level = 1;
     private long lastEggTime;
+    private long lastShooterTime;
     private GameState state = GameState.RUNNING;
     private boolean saved;
 
@@ -53,8 +54,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         boss = null;
         enemyDirection = 1;
 
-        if (level == 4) {
-            boss = new Boss();
+        if (level == 4 || level == 8) {
+            boss = new Boss(level);
             return;
         }
 
@@ -71,13 +72,18 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private EnemyType enemyTypeFor(int row, int col) {
-        if (level == 1) {
-            return EnemyType.NORMAL;
-        }
-        if (level == 2) {
-            return (row + col) % 3 == 0 ? EnemyType.FAST : EnemyType.NORMAL;
-        }
-        return (row + col) % 2 == 0 ? EnemyType.ZIGZAG : EnemyType.NORMAL;
+        return switch (level) {
+            case 1 -> EnemyType.NORMAL;
+            case 2 -> (row + col) % 3 == 0 ? EnemyType.FAST : EnemyType.NORMAL;
+            case 3 -> (row + col) % 2 == 0 ? EnemyType.ZIGZAG : EnemyType.NORMAL;
+            case 5 -> (row + col) % 2 == 0 ? EnemyType.SHOOTER : EnemyType.FAST;
+            case 6 -> (row + col) % 2 == 0 ? EnemyType.ZIGZAG : EnemyType.SHOOTER;
+            case 7 -> {
+                EnemyType[] all = {EnemyType.NORMAL, EnemyType.FAST, EnemyType.ZIGZAG, EnemyType.SHOOTER};
+                yield all[(row + col) % all.length];
+            }
+            default -> EnemyType.NORMAL;
+        };
     }
 
     @Override
@@ -128,7 +134,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     private void updateEnemies() {
         boolean hitEdge = false;
-        int speed = level == 1 ? 1 : 2;
+        int speed = level <= 1 ? 1 : level <= 3 ? 2 : 3;
 
         for (Enemy enemy : enemies) {
             enemy.move(enemyDirection * speed);
@@ -146,11 +152,31 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
 
         long now = System.currentTimeMillis();
-        long eggDelay = level == 1 ? 2500 : level == 2 ? 1800 : 1400;
+        long eggDelay = switch (level) {
+            case 1 -> 2500;
+            case 2 -> 1800;
+            case 3 -> 1400;
+            case 5 -> 1100;
+            case 6 -> 900;
+            case 7 -> 750;
+            default -> 1200;
+        };
         if (!enemies.isEmpty() && now - lastEggTime > eggDelay) {
             Enemy enemy = enemies.get(random.nextInt(enemies.size()));
             eggs.add(new Egg(enemy.centerX(), enemy.centerY()));
             lastEggTime = now;
+        }
+
+        if (now - lastShooterTime > 1300) {
+            for (Enemy enemy : enemies) {
+                if (enemy.getBounds().y > 0 && random.nextDouble() < 0.08) {
+                    if (enemy.getScore() == EnemyType.SHOOTER.getScore()) {
+                        double dx = enemy.centerX() < plane.getBounds().getCenterX() ? 5 : -5;
+                        eggs.add(new Egg(enemy.centerX(), enemy.centerY(), dx, 0));
+                    }
+                }
+            }
+            lastShooterTime = now;
         }
     }
 
@@ -194,9 +220,15 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 bulletIterator.remove();
                 boss.damage(1);
                 if (boss.isDead()) {
-                    score += 500;
-                    JOptionPane.showMessageDialog(this, "Boss defeated! Day 8 complete.");
-                    endGame("BOSS_4_CLEAR");
+                    if (boss.getLevel() == 4) {
+                        score += 500;
+                        JOptionPane.showMessageDialog(this, "Boss 4 defeated! Level 5 starts.");
+                        startLevel(5);
+                    } else {
+                        score += 1000;
+                        JOptionPane.showMessageDialog(this, "Final boss defeated! You win!");
+                        endGame("WIN");
+                    }
                 }
                 return;
             }
@@ -223,9 +255,15 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         if (level < 3) {
             JOptionPane.showMessageDialog(this, "Level " + level + " cleared!");
             startLevel(level + 1);
-        } else {
+        } else if (level == 3) {
             JOptionPane.showMessageDialog(this, "Level 3 cleared! Boss fight starts.");
             startLevel(4);
+        } else if (level < 7) {
+            JOptionPane.showMessageDialog(this, "Level " + level + " cleared!");
+            startLevel(level + 1);
+        } else {
+            JOptionPane.showMessageDialog(this, "Level 7 cleared! Final boss starts.");
+            startLevel(8);
         }
     }
 
@@ -291,7 +329,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         g2.drawString("Level: " + level, 240, 30);
         g2.drawString("Lives: " + plane.getLives(), 310, 30);
         g2.drawString("Enemies: " + enemies.size(), 24, 48);
-        g2.drawString("Day 8: Level 4 Boss", 130, 48);
+        g2.drawString("Day 9+10: Advanced Levels + Final Boss", 130, 48);
     }
 
     private boolean isPressed(int keyCode) {

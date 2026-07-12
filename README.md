@@ -84,6 +84,21 @@ Added the first boss fight:
 - Boss shoots eggs in 4 directions every 1.5 seconds
 - Defeating the boss gives 500 bonus score
 
+## Day 9 + Day 10 Combined
+
+Added the advanced late-game section:
+
+- Levels 5, 6, and 7
+- `SHOOTER` enemy type
+- Harder enemy movement speed
+- Faster egg dropping in later levels
+- Shooter enemies can fire horizontal eggs
+- Level 5 starts after defeating Boss 4
+- Level 8 starts after clearing Level 7
+- Final boss with 100 HP
+- Final boss shoots in 8 directions
+- Defeating final boss ends the game with `WIN`
+
 ## How to Run
 
 Compile:
