@@ -99,6 +99,21 @@ Added the advanced late-game section:
 - Final boss shoots in 8 directions
 - Defeating final boss ends the game with `WIN`
 
+## Day 11
+
+Added power-ups and explosion effects:
+
+- `PowerUpType`
+- `PowerUp`
+- `Explosion`
+- 20% power-up drop chance after destroying normal enemies
+- Add Fire increases simultaneous bullets
+- Rapid Fire increases fire rate for 8 seconds
+- Extra Life increases lives up to 5
+- Shield protects from egg damage for 10 seconds
+- Freeze Bomb freezes enemies and eggs for 3 seconds
+- Explosion effect on enemy/boss destruction and plane hit
+
 ## How to Run
 
 Compile:

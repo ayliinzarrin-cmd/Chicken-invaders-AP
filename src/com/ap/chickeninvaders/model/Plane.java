@@ -12,7 +12,10 @@ public class Plane {
     private final int height = 42;
     private final int speed = 5;
     private int lives = 3;
+    private int fireCount = 1;
     private long lastShotTime;
+    private long rapidUntil;
+    private long shieldUntil;
 
     public Plane(int x, int y) {
         this.x = x;
@@ -38,14 +41,31 @@ public class Plane {
     }
 
     public List<Bullet> tryShoot(long now) {
-        if (now - lastShotTime < 300) {
+        long cooldown = isRapid(now) ? 100 : 300;
+        if (now - lastShotTime < cooldown) {
             return List.of();
         }
         lastShotTime = now;
 
         List<Bullet> bullets = new ArrayList<>();
-        bullets.add(new Bullet(x + width / 2, y));
+        int spacing = 12;
+        int firstX = x + width / 2 - ((fireCount - 1) * spacing) / 2;
+        for (int i = 0; i < fireCount; i++) {
+            bullets.add(new Bullet(firstX + i * spacing, y));
+        }
         return bullets;
+    }
+
+    public void applyPowerUp(PowerUpType type, long now) {
+        switch (type) {
+            case ADD_FIRE -> fireCount = Math.min(6, fireCount + 1);
+            case RAPID_FIRE -> rapidUntil = now + 8000;
+            case EXTRA_LIFE -> lives = Math.min(5, lives + 1);
+            case SHIELD -> shieldUntil = now + 10000;
+            case FREEZE_BOMB -> {
+                // GamePanel handles the global freeze timer.
+            }
+        }
     }
 
     public Rectangle getBounds() {
@@ -60,11 +80,36 @@ public class Plane {
         return lives;
     }
 
+    public int getFireCount() {
+        return fireCount;
+    }
+
+    public boolean isRapid(long now) {
+        return now < rapidUntil;
+    }
+
+    public boolean isShielded(long now) {
+        return now < shieldUntil;
+    }
+
+    public long rapidSecondsLeft(long now) {
+        return Math.max(0, (rapidUntil - now + 999) / 1000);
+    }
+
+    public long shieldSecondsLeft(long now) {
+        return Math.max(0, (shieldUntil - now + 999) / 1000);
+    }
+
     private boolean isPressed(boolean[] keys, int keyCode) {
         return keyCode >= 0 && keyCode < keys.length && keys[keyCode];
     }
 
     public void draw(Graphics2D g) {
+        if (isShielded(System.currentTimeMillis())) {
+            g.setColor(new Color(100, 150, 255, 90));
+            g.fillOval(x - 10, y - 10, width + 20, height + 20);
+        }
+
         Polygon body = new Polygon();
         body.addPoint(x + width / 2, y);
         body.addPoint(x + width, y + height);

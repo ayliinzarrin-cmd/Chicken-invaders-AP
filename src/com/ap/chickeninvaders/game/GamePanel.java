@@ -6,7 +6,10 @@ import com.ap.chickeninvaders.model.Boss;
 import com.ap.chickeninvaders.model.Egg;
 import com.ap.chickeninvaders.model.Enemy;
 import com.ap.chickeninvaders.model.EnemyType;
+import com.ap.chickeninvaders.model.Explosion;
 import com.ap.chickeninvaders.model.Plane;
+import com.ap.chickeninvaders.model.PowerUp;
+import com.ap.chickeninvaders.model.PowerUpType;
 import com.ap.chickeninvaders.model.User;
 
 import javax.swing.*;
@@ -26,6 +29,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private final List<Bullet> bullets = new ArrayList<>();
     private final List<Enemy> enemies = new ArrayList<>();
     private final List<Egg> eggs = new ArrayList<>();
+    private final List<PowerUp> powerUps = new ArrayList<>();
+    private final List<Explosion> explosions = new ArrayList<>();
     private final Random random = new Random();
     private Boss boss;
     private int enemyDirection = 1;
@@ -33,6 +38,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private int level = 1;
     private long lastEggTime;
     private long lastShooterTime;
+    private long freezeUntil;
     private GameState state = GameState.RUNNING;
     private boolean saved;
 
@@ -51,6 +57,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         enemies.clear();
         bullets.clear();
         eggs.clear();
+        powerUps.clear();
+        explosions.clear();
         boss = null;
         enemyDirection = 1;
 
@@ -101,10 +109,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void updateGame() {
+        long now = System.currentTimeMillis();
         plane.update(keys, getWidth(), getHeight());
 
         if (isPressed(KeyEvent.VK_SPACE)) {
-            bullets.addAll(plane.tryShoot(System.currentTimeMillis()));
+            bullets.addAll(plane.tryShoot(now));
         }
 
         Iterator<Bullet> iterator = bullets.iterator();
@@ -116,14 +125,22 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             }
         }
 
+        boolean frozen = now < freezeUntil;
+
         if (boss == null) {
-            updateEnemies();
+            if (!frozen) {
+                updateEnemies();
+            }
             checkBulletEnemyCollisions();
         } else {
-            updateBoss();
+            if (!frozen) {
+                updateBoss();
+            }
             checkBulletBossCollisions();
         }
-        updateEggs();
+        updateEggs(frozen);
+        updatePowerUps(now);
+        updateExplosions();
         checkEggPlaneCollisions();
     }
 
@@ -180,12 +197,42 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
     }
 
-    private void updateEggs() {
+    private void updateEggs(boolean frozen) {
         Iterator<Egg> iterator = eggs.iterator();
         while (iterator.hasNext()) {
             Egg egg = iterator.next();
-            egg.update();
+            if (!frozen) {
+                egg.update();
+            }
             if (egg.isOutOfScreen(getHeight())) {
+                iterator.remove();
+            }
+        }
+    }
+
+    private void updatePowerUps(long now) {
+        Iterator<PowerUp> iterator = powerUps.iterator();
+        while (iterator.hasNext()) {
+            PowerUp powerUp = iterator.next();
+            powerUp.update();
+            if (powerUp.getBounds().intersects(plane.getBounds())) {
+                if (powerUp.getType() == PowerUpType.FREEZE_BOMB) {
+                    freezeUntil = now + 3000;
+                }
+                plane.applyPowerUp(powerUp.getType(), now);
+                iterator.remove();
+            } else if (powerUp.isOutOfScreen(getHeight())) {
+                iterator.remove();
+            }
+        }
+    }
+
+    private void updateExplosions() {
+        Iterator<Explosion> iterator = explosions.iterator();
+        while (iterator.hasNext()) {
+            Explosion explosion = iterator.next();
+            explosion.update();
+            if (explosion.isDone()) {
                 iterator.remove();
             }
         }
@@ -203,6 +250,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                     bulletIterator.remove();
                     enemyIterator.remove();
                     score += enemy.getScore();
+                    explosions.add(new Explosion(enemy.centerX(), enemy.centerY()));
+                    maybeDropPowerUp(enemy.centerX(), enemy.centerY());
                     if (enemies.isEmpty()) {
                         finishLevel();
                     }
@@ -220,6 +269,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 bulletIterator.remove();
                 boss.damage(1);
                 if (boss.isDead()) {
+                    Rectangle bounds = boss.getBounds();
+                    explosions.add(new Explosion(bounds.getCenterX(), bounds.getCenterY()));
                     if (boss.getLevel() == 4) {
                         score += 500;
                         JOptionPane.showMessageDialog(this, "Boss 4 defeated! Level 5 starts.");
@@ -241,13 +292,24 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             Egg egg = iterator.next();
             if (egg.getBounds().intersects(plane.getBounds())) {
                 iterator.remove();
-                plane.loseLife();
+                explosions.add(new Explosion(plane.getBounds().getCenterX(), plane.getBounds().getCenterY()));
+                if (!plane.isShielded(System.currentTimeMillis())) {
+                    plane.loseLife();
+                }
                 if (plane.getLives() <= 0) {
                     endGame("GAME_OVER");
                 }
                 return;
             }
         }
+    }
+
+    private void maybeDropPowerUp(double x, double y) {
+        if (random.nextDouble() > 0.20) {
+            return;
+        }
+        PowerUpType[] types = PowerUpType.values();
+        powerUps.add(new PowerUp(x, y, types[random.nextInt(types.length)]));
     }
 
     private void finishLevel() {
@@ -290,6 +352,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         for (Bullet bullet : bullets) {
             bullet.draw(g2);
         }
+        for (PowerUp powerUp : powerUps) {
+            powerUp.draw(g2);
+        }
         for (Enemy enemy : enemies) {
             enemy.draw(g2);
         }
@@ -298,6 +363,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
         for (Egg egg : eggs) {
             egg.draw(g2);
+        }
+        for (Explosion explosion : explosions) {
+            explosion.draw(g2);
         }
 
         if (state == GameState.PAUSED) {
@@ -321,15 +389,20 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void drawHud(Graphics2D g2) {
+        long now = System.currentTimeMillis();
         g2.setColor(new Color(255, 255, 255, 220));
-        g2.fillRoundRect(12, 10, 360, 44, 8, 8);
+        g2.fillRoundRect(12, 10, 520, 58, 8, 8);
         g2.setColor(Color.BLACK);
         g2.drawString("User: " + user.getUsername(), 24, 30);
         g2.drawString("Score: " + score, 150, 30);
         g2.drawString("Level: " + level, 240, 30);
         g2.drawString("Lives: " + plane.getLives(), 310, 30);
+        g2.drawString("Fire: " + plane.getFireCount(), 390, 30);
         g2.drawString("Enemies: " + enemies.size(), 24, 48);
-        g2.drawString("Day 9+10: Advanced Levels + Final Boss", 130, 48);
+        g2.drawString("Rapid: " + plane.rapidSecondsLeft(now), 130, 48);
+        g2.drawString("Shield: " + plane.shieldSecondsLeft(now), 220, 48);
+        g2.drawString("Freeze: " + Math.max(0, (freezeUntil - now + 999) / 1000), 320, 48);
+        g2.drawString("Day 11: Power Ups", 24, 64);
     }
 
     private boolean isPressed(int keyCode) {
