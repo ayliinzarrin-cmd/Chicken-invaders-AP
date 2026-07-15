@@ -1,6 +1,6 @@
 # Chicken Invaders AP Project
 
-Student: Write your full name here.
+Student: Aylin Zarrin
 
 ## Day 1
 
@@ -129,12 +129,41 @@ Added sound settings:
 - Shooting, explosions, and game end now call the sound manager
 - Current implementation uses simple system beeps, so no external sound files are required yet
 
+## Day 13
+
+Added the required score and help screens:
+
+- `GameRecord` model for reading saved game results
+- `HighScorePanel` with rank, username, score, level, result, and date
+- Only the best score for each username is displayed
+- Scores are sorted from highest to lowest
+- `HowToPlayPanel` with controls, mission, and power-up help
+- Each game record now also saves the four active sound settings
+
+## Project Structure
+
+- `src/com/ap/chickeninvaders`: application entry point
+- `src/com/ap/chickeninvaders/ui`: menu, login, settings, scores, and help screens
+- `src/com/ap/chickeninvaders/game`: game loop and game state
+- `src/com/ap/chickeninvaders/model`: users and game objects
+- `src/com/ap/chickeninvaders/db`: text-file database manager
+- `src/com/ap/chickeninvaders/sound`: sound settings and effects
+
+## Database
+
+The project uses an advanced text-file database and needs no external library.
+
+- `data/users.txt`: username, password, high score, last level, and sound settings
+- `data/game_records.txt`: username, score, level, result, timestamp, and sound settings
+
+The `data` folder and both files are created automatically when the game starts.
+
 ## How to Run
 
 Compile:
 
 ```bash
-javac -encoding UTF-8 -d out src/com/ap/chickeninvaders/*.java src/com/ap/chickeninvaders/ui/*.java src/com/ap/chickeninvaders/model/*.java src/com/ap/chickeninvaders/db/*.java src/com/ap/chickeninvaders/game/*.java
+javac -encoding UTF-8 -d out src/com/ap/chickeninvaders/*.java src/com/ap/chickeninvaders/ui/*.java src/com/ap/chickeninvaders/model/*.java src/com/ap/chickeninvaders/db/*.java src/com/ap/chickeninvaders/game/*.java src/com/ap/chickeninvaders/sound/*.java
 ```
 
 Run:
@@ -152,4 +181,4 @@ java -cp out com.ap.chickeninvaders.GameMain
 
 ## GitHub
 
-Repository link: paste your GitHub link here.
+Repository: https://github.com/ayliinzarrin-cmd/Chicken-invaders-AP

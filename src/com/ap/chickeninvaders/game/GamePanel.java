@@ -413,7 +413,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         g2.drawString("Rapid: " + plane.rapidSecondsLeft(now), 130, 48);
         g2.drawString("Shield: " + plane.shieldSecondsLeft(now), 220, 48);
         g2.drawString("Freeze: " + Math.max(0, (freezeUntil - now + 999) / 1000), 320, 48);
-        g2.drawString("Day 11: Power Ups", 24, 64);
+        g2.drawString("Goal: clear every enemy and survive.", 24, 64);
     }
 
     private boolean isPressed(int keyCode) {

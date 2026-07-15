@@ -1,13 +1,16 @@
 package com.ap.chickeninvaders.db;
 
 import com.ap.chickeninvaders.model.User;
+import com.ap.chickeninvaders.model.GameRecord;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DatabaseManager {
     private final File dataDirectory = new File("data");
@@ -95,7 +98,11 @@ public class DatabaseManager {
 
     public void saveGameRecord(User user, int score, int levelReached, String status) {
         String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        String line = user.getUsername() + "|" + score + "|" + levelReached + "|" + status + "|" + time;
+        String line = user.getUsername() + "|" + score + "|" + levelReached + "|" + status + "|" + time
+                + "|" + flag(user.isMusicOn())
+                + "|" + flag(user.isShotSoundOn())
+                + "|" + flag(user.isExplosionSoundOn())
+                + "|" + flag(user.isEndSoundOn());
 
         try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(
                 new FileOutputStream(recordsFile, true), StandardCharsets.UTF_8))) {
@@ -111,6 +118,47 @@ public class DatabaseManager {
             user.setLastLevel(levelReached);
         }
         updateUser(user);
+    }
+
+    public List<GameRecord> getHighScores(int limit) {
+        Map<String, GameRecord> bestByUser = new HashMap<>();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                new FileInputStream(recordsFile), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                GameRecord record = GameRecord.fromFileLine(line);
+                if (record == null) {
+                    continue;
+                }
+
+                GameRecord currentBest = bestByUser.get(record.getUsername());
+                boolean hasBetterScore = currentBest == null || record.getScore() > currentBest.getScore();
+                boolean hasNewerEqualScore = currentBest != null
+                        && record.getScore() == currentBest.getScore()
+                        && record.getPlayedAt().compareTo(currentBest.getPlayedAt()) > 0;
+
+                if (hasBetterScore || hasNewerEqualScore) {
+                    bestByUser.put(record.getUsername(), record);
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Could not read game records.", e);
+        }
+
+        List<GameRecord> records = new ArrayList<>(bestByUser.values());
+        records.sort((first, second) -> {
+            int scoreOrder = Integer.compare(second.getScore(), first.getScore());
+            if (scoreOrder != 0) {
+                return scoreOrder;
+            }
+            return second.getPlayedAt().compareTo(first.getPlayedAt());
+        });
+
+        if (limit > 0 && records.size() > limit) {
+            return new ArrayList<>(records.subList(0, limit));
+        }
+        return records;
     }
 
     private List<User> readUsers() {
@@ -151,6 +199,10 @@ public class DatabaseManager {
             return "";
         }
         return text.replace("|", "").trim();
+    }
+
+    private String flag(boolean value) {
+        return value ? "1" : "0";
     }
 }
 

@@ -2,7 +2,8 @@ package com.ap.chickeninvaders;
 
 import com.ap.chickeninvaders.ui.LoginPanel;
 import com.ap.chickeninvaders.ui.MainMenuPanel;
-import com.ap.chickeninvaders.ui.PlaceholderPanel;
+import com.ap.chickeninvaders.ui.HighScorePanel;
+import com.ap.chickeninvaders.ui.HowToPlayPanel;
 import com.ap.chickeninvaders.ui.RegisterPanel;
 import com.ap.chickeninvaders.ui.SettingsPanel;
 import com.ap.chickeninvaders.db.DatabaseManager;
@@ -19,6 +20,7 @@ public class GameMain extends JFrame {
     private final DatabaseManager databaseManager = new DatabaseManager();
     private final SoundManager soundManager = new SoundManager();
     private final SettingsPanel settingsPanel = new SettingsPanel(this);
+    private final HighScorePanel highScorePanel = new HighScorePanel(this);
     private User currentUser;
 
     public GameMain() {
@@ -32,9 +34,9 @@ public class GameMain extends JFrame {
         addScreen("menu", new MainMenuPanel(this));
         addScreen("login", new LoginPanel(this));
         addScreen("register", new RegisterPanel(this));
-        addScreen("scores", new PlaceholderPanel(this, "High Scores will be added later."));
+        addScreen("scores", highScorePanel);
         addScreen("settings", settingsPanel);
-        addScreen("how", new PlaceholderPanel(this, "How to Play will be completed later."));
+        addScreen("how", new HowToPlayPanel(this));
     }
 
     public void addScreen(String name, JPanel panel) {
@@ -44,6 +46,9 @@ public class GameMain extends JFrame {
     public void showScreen(String name) {
         if ("settings".equals(name)) {
             settingsPanel.refresh();
+        }
+        if ("scores".equals(name)) {
+            highScorePanel.refreshScores();
         }
         cardLayout.show(root, name);
     }
