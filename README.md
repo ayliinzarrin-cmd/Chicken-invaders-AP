@@ -114,6 +114,21 @@ Added power-ups and explosion effects:
 - Freeze Bomb freezes enemies and eggs for 3 seconds
 - Explosion effect on enemy/boss destruction and plane hit
 
+## Day 12
+
+Added sound settings:
+
+- `SoundManager`
+- `SettingsPanel`
+- Four saved sound settings:
+  - Background Music
+  - Shot Sound
+  - Explosion Sound
+  - Game Over / Win Sound
+- Settings are saved in `data/users.txt`
+- Shooting, explosions, and game end now call the sound manager
+- Current implementation uses simple system beeps, so no external sound files are required yet
+
 ## How to Run
 
 Compile:

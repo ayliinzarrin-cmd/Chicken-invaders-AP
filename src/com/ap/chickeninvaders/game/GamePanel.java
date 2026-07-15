@@ -11,6 +11,7 @@ import com.ap.chickeninvaders.model.Plane;
 import com.ap.chickeninvaders.model.PowerUp;
 import com.ap.chickeninvaders.model.PowerUpType;
 import com.ap.chickeninvaders.model.User;
+import com.ap.chickeninvaders.sound.SoundManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,6 +24,7 @@ import java.util.Random;
 public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private final GameMain app;
     private final User user;
+    private final SoundManager soundManager;
     private final Timer timer = new Timer(16, this);
     private final boolean[] keys = new boolean[256];
     private final Plane plane = new Plane(380, 500);
@@ -42,9 +44,10 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private GameState state = GameState.RUNNING;
     private boolean saved;
 
-    public GamePanel(GameMain app, User user) {
+    public GamePanel(GameMain app, User user, SoundManager soundManager) {
         this.app = app;
         this.user = user;
+        this.soundManager = soundManager;
         setFocusable(true);
         setBackground(Color.BLACK);
         addKeyListener(this);
@@ -113,7 +116,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         plane.update(keys, getWidth(), getHeight());
 
         if (isPressed(KeyEvent.VK_SPACE)) {
-            bullets.addAll(plane.tryShoot(now));
+            List<Bullet> newBullets = plane.tryShoot(now);
+            if (!newBullets.isEmpty()) {
+                bullets.addAll(newBullets);
+                soundManager.playShot();
+            }
         }
 
         Iterator<Bullet> iterator = bullets.iterator();
@@ -251,6 +258,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                     enemyIterator.remove();
                     score += enemy.getScore();
                     explosions.add(new Explosion(enemy.centerX(), enemy.centerY()));
+                    soundManager.playExplosion();
                     maybeDropPowerUp(enemy.centerX(), enemy.centerY());
                     if (enemies.isEmpty()) {
                         finishLevel();
@@ -271,6 +279,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 if (boss.isDead()) {
                     Rectangle bounds = boss.getBounds();
                     explosions.add(new Explosion(bounds.getCenterX(), bounds.getCenterY()));
+                    soundManager.playExplosion();
                     if (boss.getLevel() == 4) {
                         score += 500;
                         JOptionPane.showMessageDialog(this, "Boss 4 defeated! Level 5 starts.");
@@ -293,6 +302,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             if (egg.getBounds().intersects(plane.getBounds())) {
                 iterator.remove();
                 explosions.add(new Explosion(plane.getBounds().getCenterX(), plane.getBounds().getCenterY()));
+                soundManager.playExplosion();
                 if (!plane.isShielded(System.currentTimeMillis())) {
                     plane.loseLife();
                 }
@@ -336,6 +346,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         saved = true;
         state = GameState.GAME_OVER;
         timer.stop();
+        soundManager.playEnd();
         JOptionPane.showMessageDialog(this, status + "\nScore: " + score);
         app.finishGame(score, level, status);
     }

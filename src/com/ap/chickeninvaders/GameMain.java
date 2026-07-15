@@ -4,9 +4,11 @@ import com.ap.chickeninvaders.ui.LoginPanel;
 import com.ap.chickeninvaders.ui.MainMenuPanel;
 import com.ap.chickeninvaders.ui.PlaceholderPanel;
 import com.ap.chickeninvaders.ui.RegisterPanel;
+import com.ap.chickeninvaders.ui.SettingsPanel;
 import com.ap.chickeninvaders.db.DatabaseManager;
 import com.ap.chickeninvaders.game.GamePanel;
 import com.ap.chickeninvaders.model.User;
+import com.ap.chickeninvaders.sound.SoundManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,6 +17,8 @@ public class GameMain extends JFrame {
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel root = new JPanel(cardLayout);
     private final DatabaseManager databaseManager = new DatabaseManager();
+    private final SoundManager soundManager = new SoundManager();
+    private final SettingsPanel settingsPanel = new SettingsPanel(this);
     private User currentUser;
 
     public GameMain() {
@@ -29,7 +33,7 @@ public class GameMain extends JFrame {
         addScreen("login", new LoginPanel(this));
         addScreen("register", new RegisterPanel(this));
         addScreen("scores", new PlaceholderPanel(this, "High Scores will be added later."));
-        addScreen("settings", new PlaceholderPanel(this, "Sound Settings will be added later."));
+        addScreen("settings", settingsPanel);
         addScreen("how", new PlaceholderPanel(this, "How to Play will be completed later."));
     }
 
@@ -38,6 +42,9 @@ public class GameMain extends JFrame {
     }
 
     public void showScreen(String name) {
+        if ("settings".equals(name)) {
+            settingsPanel.refresh();
+        }
         cardLayout.show(root, name);
     }
 
@@ -45,8 +52,13 @@ public class GameMain extends JFrame {
         return databaseManager;
     }
 
+    public SoundManager getSoundManager() {
+        return soundManager;
+    }
+
     public void setCurrentUser(User user) {
         this.currentUser = user;
+        soundManager.setUser(user);
     }
 
     public User getCurrentUser() {
@@ -59,7 +71,7 @@ public class GameMain extends JFrame {
             showScreen("login");
             return;
         }
-        GamePanel gamePanel = new GamePanel(this, currentUser);
+        GamePanel gamePanel = new GamePanel(this, currentUser, soundManager);
         root.add(gamePanel, "game");
         showScreen("game");
         gamePanel.requestFocusInWindow();
@@ -69,6 +81,7 @@ public class GameMain extends JFrame {
         if (currentUser != null) {
             databaseManager.saveGameRecord(currentUser, score, levelReached, status);
             currentUser = databaseManager.findUser(currentUser.getUsername());
+            soundManager.setUser(currentUser);
         }
         showScreen("menu");
     }

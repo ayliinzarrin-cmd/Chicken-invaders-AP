@@ -100,5 +100,13 @@ public class User {
     public boolean isEndSoundOn() {
         return endSoundOn;
     }
+
+    public void setSoundSettings(boolean musicOn, boolean shotSoundOn,
+                                 boolean explosionSoundOn, boolean endSoundOn) {
+        this.musicOn = musicOn;
+        this.shotSoundOn = shotSoundOn;
+        this.explosionSoundOn = explosionSoundOn;
+        this.endSoundOn = endSoundOn;
+    }
 }
 
