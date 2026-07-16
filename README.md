@@ -140,6 +140,21 @@ Added the required score and help screens:
 - `HowToPlayPanel` with controls, mission, and power-up help
 - Each game record now also saves the four active sound settings
 
+## Day 14
+
+Completed the required enemy cell and health system:
+
+- Added the `Cell` class for the 5 by 8 formation
+- Every cell stores its enemy type, position, and remaining enemy counter
+- Cell counters follow the project table: 2, 2, 3, 3, 4, and 4
+- Normal, Fast, Zigzag, and Shooter enemies now have different health values
+- Enemy health increases in levels 5 to 7
+- Each enemy displays a health bar and its cell counter
+- Destroyed enemies respawn from a random top corner while their cell counter is above zero
+- Replacement enemies can be shot while flying toward their cell
+- Formation speed, vertical step, and egg delay now follow each level's values
+- Shooter enemies aim their special projectiles toward the player's current position
+
 ## Project Structure
 
 - `src/com/ap/chickeninvaders`: application entry point
