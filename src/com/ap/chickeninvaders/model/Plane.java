@@ -84,6 +84,14 @@ public class Plane {
         return fireCount;
     }
 
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
     public boolean isRapid(long now) {
         return now < rapidUntil;
     }

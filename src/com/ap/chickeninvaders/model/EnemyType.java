@@ -23,5 +23,13 @@ public enum EnemyType {
     public Color getColor() {
         return color;
     }
+
+    public int getHealthForLevel(int level) {
+        boolean advancedLevel = level >= 5;
+        return switch (this) {
+            case NORMAL, ZIGZAG, SHOOTER -> advancedLevel ? 3 : 2;
+            case FAST -> advancedLevel ? 2 : 1;
+        };
+    }
 }
 

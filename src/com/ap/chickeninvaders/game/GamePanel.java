@@ -3,11 +3,14 @@ package com.ap.chickeninvaders.game;
 import com.ap.chickeninvaders.GameMain;
 import com.ap.chickeninvaders.model.Bullet;
 import com.ap.chickeninvaders.model.Boss;
+import com.ap.chickeninvaders.model.Cell;
 import com.ap.chickeninvaders.model.Egg;
+import com.ap.chickeninvaders.model.EchoPlane;
 import com.ap.chickeninvaders.model.Enemy;
 import com.ap.chickeninvaders.model.EnemyType;
 import com.ap.chickeninvaders.model.Explosion;
 import com.ap.chickeninvaders.model.Plane;
+import com.ap.chickeninvaders.model.PlayerSnapshot;
 import com.ap.chickeninvaders.model.PowerUp;
 import com.ap.chickeninvaders.model.PowerUpType;
 import com.ap.chickeninvaders.model.User;
@@ -17,11 +20,16 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
 public class GamePanel extends JPanel implements ActionListener, KeyListener {
+    private static final long ECHO_MEMORY_MS = 5000;
+    private static final long ECHO_COOLDOWN_MS = 15000;
+
     private final GameMain app;
     private final User user;
     private final SoundManager soundManager;
@@ -29,11 +37,15 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private final boolean[] keys = new boolean[256];
     private final Plane plane = new Plane(380, 500);
     private final List<Bullet> bullets = new ArrayList<>();
+    private final List<Cell> cells = new ArrayList<>();
     private final List<Enemy> enemies = new ArrayList<>();
     private final List<Egg> eggs = new ArrayList<>();
     private final List<PowerUp> powerUps = new ArrayList<>();
     private final List<Explosion> explosions = new ArrayList<>();
+    private final Deque<PlayerSnapshot> echoHistory = new ArrayDeque<>();
     private final Random random = new Random();
+    private EchoPlane echoPlane;
+    private long echoReadyAt;
     private Boss boss;
     private int enemyDirection = 1;
     private int score;
@@ -57,6 +69,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     private void startLevel(int nextLevel) {
         level = nextLevel;
+        cells.clear();
         enemies.clear();
         bullets.clear();
         eggs.clear();
@@ -64,6 +77,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         explosions.clear();
         boss = null;
         enemyDirection = 1;
+        lastEggTime = System.currentTimeMillis();
+        lastShooterTime = lastEggTime;
 
         if (level == 4 || level == 8) {
             boss = new Boss(level);
@@ -74,10 +89,18 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         int startY = 85;
         int gapX = 72;
         int gapY = 48;
+        int enemyCount = enemyCountForLevel();
 
         for (int row = 0; row < 5; row++) {
             for (int col = 0; col < 8; col++) {
-                enemies.add(new Enemy(startX + col * gapX, startY + row * gapY, enemyTypeFor(row, col)));
+                Cell cell = new Cell(
+                        startX + col * gapX,
+                        startY + row * gapY,
+                        enemyTypeFor(row, col),
+                        enemyCount
+                );
+                cells.add(cell);
+                enemies.add(new Enemy(cell, level));
             }
         }
     }
@@ -94,6 +117,36 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 yield all[(row + col) % all.length];
             }
             default -> EnemyType.NORMAL;
+        };
+    }
+
+    private int enemyCountForLevel() {
+        return switch (level) {
+            case 1, 2 -> 2;
+            case 3, 5 -> 3;
+            case 6, 7 -> 4;
+            default -> 1;
+        };
+    }
+
+    private double formationSpeed() {
+        return switch (level) {
+            case 1 -> 1.0;
+            case 2 -> 1.5;
+            case 3 -> 2.0;
+            case 5 -> 2.5;
+            case 6 -> 3.0;
+            case 7 -> 3.5;
+            default -> 1.0;
+        };
+    }
+
+    private int verticalStep() {
+        return switch (level) {
+            case 1, 2 -> 20;
+            case 3, 5 -> 25;
+            case 6, 7 -> 30;
+            default -> 20;
         };
     }
 
@@ -114,14 +167,19 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private void updateGame() {
         long now = System.currentTimeMillis();
         plane.update(keys, getWidth(), getHeight());
+        boolean playerShot = false;
 
         if (isPressed(KeyEvent.VK_SPACE)) {
             List<Bullet> newBullets = plane.tryShoot(now);
             if (!newBullets.isEmpty()) {
                 bullets.addAll(newBullets);
                 soundManager.playShot();
+                playerShot = true;
             }
         }
+
+        recordEchoSnapshot(now, playerShot);
+        updateEcho(now);
 
         Iterator<Bullet> iterator = bullets.iterator();
         while (iterator.hasNext()) {
@@ -151,57 +209,132 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         checkEggPlaneCollisions();
     }
 
+    private void recordEchoSnapshot(long now, boolean shot) {
+        echoHistory.addLast(new PlayerSnapshot(
+                now,
+                plane.getX(),
+                plane.getY(),
+                plane.getFireCount(),
+                shot
+        ));
+
+        while (!echoHistory.isEmpty()
+                && now - echoHistory.peekFirst().getCapturedAt() > ECHO_MEMORY_MS) {
+            echoHistory.removeFirst();
+        }
+    }
+
+    private void updateEcho(long now) {
+        if (echoPlane == null) {
+            return;
+        }
+
+        bullets.addAll(echoPlane.update(now));
+        if (!echoPlane.isActive()) {
+            echoPlane = null;
+        }
+    }
+
+    private void activateEcho(long now) {
+        if (echoPlane != null || now < echoReadyAt || echoHistory.size() < 2) {
+            return;
+        }
+
+        long recordedTime = echoHistory.peekLast().getCapturedAt()
+                - echoHistory.peekFirst().getCapturedAt();
+        if (recordedTime < 1000) {
+            return;
+        }
+
+        echoPlane = new EchoPlane(new ArrayList<>(echoHistory), now);
+        echoReadyAt = now + ECHO_COOLDOWN_MS;
+        soundManager.playEcho();
+    }
+
     private void updateBoss() {
         boss.update(getWidth());
         eggs.addAll(boss.tryShoot(System.currentTimeMillis()));
     }
 
     private void updateEnemies() {
+        double speed = formationSpeed();
+        double dx = enemyDirection * speed;
         boolean hitEdge = false;
-        int speed = level <= 1 ? 1 : level <= 3 ? 2 : 3;
+        int panelWidth = getWidth() > 0 ? getWidth() : 800;
 
-        for (Enemy enemy : enemies) {
-            enemy.move(enemyDirection * speed);
-            Rectangle bounds = enemy.getBounds();
-            if (bounds.x < 10 || bounds.x + bounds.width > getWidth() - 10) {
+        for (Cell cell : cells) {
+            double nextX = cell.getX() + dx;
+            if (nextX < 22 || nextX + 54 > panelWidth - 10) {
                 hitEdge = true;
+                break;
             }
         }
 
         if (hitEdge) {
             enemyDirection *= -1;
-            for (Enemy enemy : enemies) {
-                enemy.moveDown(20);
+            for (Cell cell : cells) {
+                cell.moveDown(verticalStep());
             }
+        } else {
+            for (Cell cell : cells) {
+                cell.move(dx);
+            }
+        }
+
+        for (Enemy enemy : enemies) {
+            enemy.update(speed);
         }
 
         long now = System.currentTimeMillis();
         long eggDelay = switch (level) {
-            case 1 -> 2500;
-            case 2 -> 1800;
-            case 3 -> 1400;
-            case 5 -> 1100;
-            case 6 -> 900;
-            case 7 -> 750;
+            case 1 -> 3000;
+            case 2 -> 2000;
+            case 3 -> 1500;
+            case 5 -> 1000;
+            case 6 -> 800;
+            case 7 -> 700;
             default -> 1200;
         };
         if (!enemies.isEmpty() && now - lastEggTime > eggDelay) {
-            Enemy enemy = enemies.get(random.nextInt(enemies.size()));
-            eggs.add(new Egg(enemy.centerX(), enemy.centerY()));
+            Enemy enemy = randomSettledEnemy();
+            if (enemy != null) {
+                eggs.add(new Egg(enemy.centerX(), enemy.centerY()));
+            }
             lastEggTime = now;
         }
 
         if (now - lastShooterTime > 1300) {
             for (Enemy enemy : enemies) {
-                if (enemy.getBounds().y > 0 && random.nextDouble() < 0.08) {
-                    if (enemy.getScore() == EnemyType.SHOOTER.getScore()) {
-                        double dx = enemy.centerX() < plane.getBounds().getCenterX() ? 5 : -5;
-                        eggs.add(new Egg(enemy.centerX(), enemy.centerY(), dx, 0));
-                    }
+                if (enemy.isSettled() && enemy.getType() == EnemyType.SHOOTER
+                        && random.nextDouble() < 0.08) {
+                    double aimX = plane.getBounds().getCenterX() - enemy.centerX();
+                    double aimY = plane.getBounds().getCenterY() - enemy.centerY();
+                    double length = Math.max(1, Math.hypot(aimX, aimY));
+                    eggs.add(new Egg(
+                            enemy.centerX(),
+                            enemy.centerY(),
+                            aimX / length * 5,
+                            aimY / length * 5
+                    ));
                 }
             }
             lastShooterTime = now;
         }
+    }
+
+    private Enemy randomSettledEnemy() {
+        if (enemies.isEmpty()) {
+            return null;
+        }
+
+        int start = random.nextInt(enemies.size());
+        for (int i = 0; i < enemies.size(); i++) {
+            Enemy enemy = enemies.get((start + i) % enemies.size());
+            if (enemy.isSettled()) {
+                return enemy;
+            }
+        }
+        return null;
     }
 
     private void updateEggs(boolean frozen) {
@@ -246,27 +379,39 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void checkBulletEnemyCollisions() {
-        Iterator<Bullet> bulletIterator = bullets.iterator();
-        while (bulletIterator.hasNext()) {
-            Bullet bullet = bulletIterator.next();
+        for (int bulletIndex = bullets.size() - 1; bulletIndex >= 0; bulletIndex--) {
+            Bullet bullet = bullets.get(bulletIndex);
 
-            Iterator<Enemy> enemyIterator = enemies.iterator();
-            while (enemyIterator.hasNext()) {
-                Enemy enemy = enemyIterator.next();
+            for (int enemyIndex = enemies.size() - 1; enemyIndex >= 0; enemyIndex--) {
+                Enemy enemy = enemies.get(enemyIndex);
                 if (bullet.getBounds().intersects(enemy.getBounds())) {
-                    bulletIterator.remove();
-                    enemyIterator.remove();
-                    score += enemy.getScore();
-                    explosions.add(new Explosion(enemy.centerX(), enemy.centerY()));
-                    soundManager.playExplosion();
-                    maybeDropPowerUp(enemy.centerX(), enemy.centerY());
-                    if (enemies.isEmpty()) {
-                        finishLevel();
+                    bullets.remove(bulletIndex);
+
+                    if (enemy.damage(1)) {
+                        enemies.remove(enemyIndex);
+                        Cell cell = enemy.getCell();
+                        cell.registerKill();
+                        score += enemy.getScore();
+                        explosions.add(new Explosion(enemy.centerX(), enemy.centerY()));
+                        soundManager.playExplosion();
+                        maybeDropPowerUp(enemy.centerX(), enemy.centerY());
+
+                        if (cell.needsReplacement()) {
+                            enemies.add(createReplacement(cell));
+                        } else if (enemies.isEmpty()) {
+                            finishLevel();
+                        }
                     }
                     return;
                 }
             }
         }
+    }
+
+    private Enemy createReplacement(Cell cell) {
+        int panelWidth = getWidth() > 0 ? getWidth() : 800;
+        double spawnX = random.nextBoolean() ? -55 : panelWidth + 15;
+        return new Enemy(cell, spawnX, 15, level);
     }
 
     private void checkBulletBossCollisions() {
@@ -346,7 +491,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         saved = true;
         state = GameState.GAME_OVER;
         timer.stop();
-        soundManager.playEnd();
+        soundManager.playEnd("WIN".equals(status));
         JOptionPane.showMessageDialog(this, status + "\nScore: " + score);
         app.finishGame(score, level, status);
     }
@@ -359,6 +504,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         drawBackground(g2);
         drawHud(g2);
+        if (echoPlane != null) {
+            echoPlane.draw(g2);
+        }
         plane.draw(g2);
         for (Bullet bullet : bullets) {
             bullet.draw(g2);
@@ -402,18 +550,40 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private void drawHud(Graphics2D g2) {
         long now = System.currentTimeMillis();
         g2.setColor(new Color(255, 255, 255, 220));
-        g2.fillRoundRect(12, 10, 520, 58, 8, 8);
+        g2.fillRoundRect(12, 10, 760, 58, 8, 8);
         g2.setColor(Color.BLACK);
         g2.drawString("User: " + user.getUsername(), 24, 30);
         g2.drawString("Score: " + score, 150, 30);
         g2.drawString("Level: " + level, 240, 30);
         g2.drawString("Lives: " + plane.getLives(), 310, 30);
         g2.drawString("Fire: " + plane.getFireCount(), 390, 30);
-        g2.drawString("Enemies: " + enemies.size(), 24, 48);
+        String targetText = boss == null ? String.valueOf(remainingEnemyCount()) : "BOSS";
+        g2.drawString("Targets: " + targetText, 24, 48);
         g2.drawString("Rapid: " + plane.rapidSecondsLeft(now), 130, 48);
         g2.drawString("Shield: " + plane.shieldSecondsLeft(now), 220, 48);
         g2.drawString("Freeze: " + Math.max(0, (freezeUntil - now + 999) / 1000), 320, 48);
+        g2.drawString("Echo: " + echoStatus(now), 430, 48);
         g2.drawString("Goal: clear every enemy and survive.", 24, 64);
+    }
+
+    private String echoStatus(long now) {
+        if (echoPlane != null) {
+            return "ACTIVE";
+        }
+        if (echoHistory.size() < 2
+                || echoHistory.peekLast().getCapturedAt() - echoHistory.peekFirst().getCapturedAt() < 1000) {
+            return "RECORDING";
+        }
+        long seconds = Math.max(0, (echoReadyAt - now + 999) / 1000);
+        return seconds == 0 ? "READY [E]" : seconds + "s";
+    }
+
+    private int remainingEnemyCount() {
+        int total = 0;
+        for (Cell cell : cells) {
+            total += cell.getRemainingEnemies();
+        }
+        return total;
     }
 
     private boolean isPressed(int keyCode) {
@@ -433,6 +603,10 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             } else if (state == GameState.PAUSED) {
                 state = GameState.RUNNING;
             }
+        }
+
+        if (code == KeyEvent.VK_E && state == GameState.RUNNING) {
+            activateEcho(System.currentTimeMillis());
         }
 
         if (code == KeyEvent.VK_ESCAPE) {

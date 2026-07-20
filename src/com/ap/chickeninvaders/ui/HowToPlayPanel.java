@@ -47,9 +47,13 @@ public class HowToPlayPanel extends JPanel {
                 + "<tr><td><b>A / Arrow Left</b></td><td>Move left</td></tr>"
                 + "<tr><td><b>D / Arrow Right</b></td><td>Move right</td></tr>"
                 + "<tr><td><b>Space</b></td><td>Shoot</td></tr>"
+                + "<tr><td><b>E</b></td><td>Activate Echo Squadron</td></tr>"
                 + "<tr><td><b>P</b></td><td>Pause or resume</td></tr>"
                 + "<tr><td><b>Esc</b></td><td>Finish the game and return to the menu</td></tr>"
                 + "</table>"
+                + "<h2>Echo Squadron</h2>"
+                + "<p>The game remembers your last five seconds. Press E to create a holographic wingmate that repeats those movements and shots.</p>"
+                + "<p>Echo bullets damage enemies. After activation, the ability needs 15 seconds to recharge.</p>"
                 + "<h2>Power-Ups</h2>"
                 + "<p><b>Add Fire:</b> adds another bullet to every shot.</p>"
                 + "<p><b>Rapid Fire:</b> temporarily increases the shooting speed.</p>"
@@ -58,6 +62,8 @@ public class HowToPlayPanel extends JPanel {
                 + "<p><b>Freeze Bomb:</b> freezes enemies and eggs for three seconds.</p>"
                 + "<h2>Important</h2>"
                 + "<p>Your lives continue between levels. Eggs remove one life unless the shield is active.</p>"
+                + "<p>Enemies have health bars and may need several hits. The number badge shows how many enemies remain in that grid cell.</p>"
+                + "<p>When a cell still has enemies left, a replacement flies in from a top corner and can be hit during its flight.</p>"
                 + "</body></html>";
     }
 }

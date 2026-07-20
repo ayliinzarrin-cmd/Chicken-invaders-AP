@@ -1,4 +1,4 @@
-# Chicken Invaders AP Project
+# Chicken Invaders: Echo Squadron
 
 Student: Aylin Zarrin
 
@@ -127,7 +127,7 @@ Added sound settings:
   - Game Over / Win Sound
 - Settings are saved in `data/users.txt`
 - Shooting, explosions, and game end now call the sound manager
-- Current implementation uses simple system beeps, so no external sound files are required yet
+- Day 12 initially used system beeps; Day 15 replaces them with generated digital audio
 
 ## Day 13
 
@@ -155,6 +155,21 @@ Completed the required enemy cell and health system:
 - Formation speed, vertical step, and egg delay now follow each level's values
 - Shooter enemies aim their special projectiles toward the player's current position
 
+## Day 15 - Final Version
+
+Added the project's original feature and completed final delivery:
+
+- `PlayerSnapshot` records the player's recent position and shooting actions
+- `EchoPlane` replays the last five seconds as a holographic wingmate
+- Press `E` to activate Echo Squadron after it finishes recording
+- Echo bullets damage regular enemies and bosses
+- Echo has a visible 15-second cooldown in the HUD
+- Echo plane and bullets have a separate holographic visual style
+- Replaced system beeps with generated digital sound effects
+- Added looping background music, shot, explosion, Echo, win, and game-over sounds
+- All four saved sound switches continue to work independently
+- Added `ChickenInvaders.jar` and `run.bat` for easy execution
+
 ## Project Structure
 
 - `src/com/ap/chickeninvaders`: application entry point
@@ -175,6 +190,20 @@ The `data` folder and both files are created automatically when the game starts.
 
 ## How to Run
 
+Requirement: Java Development Kit (JDK) 17 or newer. No external library is required.
+
+Easiest method on Windows:
+
+1. Double-click `run.bat`.
+
+Or run the JAR from a terminal:
+
+```bash
+java -jar ChickenInvaders.jar
+```
+
+To compile the source code manually:
+
 Compile:
 
 ```bash
@@ -191,6 +220,7 @@ java -cp out com.ap.chickeninvaders.GameMain
 
 - Arrow keys / WASD: move
 - Space: shoot
+- E: activate Echo Squadron
 - P: pause/resume
 - Esc: return to menu
 

@@ -12,11 +12,11 @@ public class MainMenuPanel extends JPanel {
 
         JPanel buttons = new JPanel(new GridLayout(0, 1, 10, 10));
         buttons.setOpaque(false);
-        buttons.setPreferredSize(new Dimension(270, 390));
+        buttons.setPreferredSize(new Dimension(380, 390));
 
-        JLabel title = new JLabel("Chicken Invaders", SwingConstants.CENTER);
+        JLabel title = new JLabel("Chicken Invaders: Echo Squadron", SwingConstants.CENTER);
         title.setForeground(Color.WHITE);
-        title.setFont(title.getFont().deriveFont(Font.BOLD, 30f));
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 26f));
 
         JButton newGame = new JButton("New Game");
         JButton login = new JButton("Login");

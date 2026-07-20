@@ -24,7 +24,7 @@ public class GameMain extends JFrame {
     private User currentUser;
 
     public GameMain() {
-        super("Chicken Invaders AP");
+        super("Chicken Invaders: Echo Squadron");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setResizable(false);
         setSize(800, 600);
