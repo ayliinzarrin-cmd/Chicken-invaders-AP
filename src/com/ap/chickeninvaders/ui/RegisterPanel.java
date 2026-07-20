@@ -8,13 +8,15 @@ import java.awt.*;
 public class RegisterPanel extends JPanel {
     public RegisterPanel(GameMain app) {
         setLayout(new GridBagLayout());
-        setBackground(new Color(10, 14, 30));
+        setBackground(UiStyle.BACKGROUND);
 
         JPanel form = new JPanel(new GridLayout(0, 1, 8, 8));
-        form.setPreferredSize(new Dimension(280, 250));
+        form.setPreferredSize(new Dimension(320, 340));
+        UiStyle.stylePanel(form);
 
         JLabel title = new JLabel("Register", SwingConstants.CENTER);
         title.setFont(title.getFont().deriveFont(Font.BOLD, 24f));
+        title.setForeground(UiStyle.ECHO);
 
         JTextField usernameField = new JTextField();
         JPasswordField passwordField = new JPasswordField();
@@ -22,12 +24,18 @@ public class RegisterPanel extends JPanel {
         JButton registerButton = new JButton("Register");
         JButton backButton = new JButton("Back");
 
+        UiStyle.styleField(usernameField);
+        UiStyle.styleField(passwordField);
+        UiStyle.styleField(repeatPasswordField);
+        UiStyle.styleButton(registerButton, true);
+        UiStyle.styleButton(backButton, false);
+
         form.add(title);
-        form.add(new JLabel("Username"));
+        form.add(UiStyle.label("Username"));
         form.add(usernameField);
-        form.add(new JLabel("Password"));
+        form.add(UiStyle.label("Password"));
         form.add(passwordField);
-        form.add(new JLabel("Repeat Password"));
+        form.add(UiStyle.label("Repeat Password"));
         form.add(repeatPasswordField);
         form.add(registerButton);
         form.add(backButton);

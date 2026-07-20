@@ -9,23 +9,30 @@ import java.awt.*;
 public class LoginPanel extends JPanel {
     public LoginPanel(GameMain app) {
         setLayout(new GridBagLayout());
-        setBackground(new Color(10, 14, 30));
+        setBackground(UiStyle.BACKGROUND);
 
         JPanel form = new JPanel(new GridLayout(0, 1, 8, 8));
         form.setPreferredSize(new Dimension(280, 230));
+        UiStyle.stylePanel(form);
 
         JLabel title = new JLabel("Login", SwingConstants.CENTER);
         title.setFont(title.getFont().deriveFont(Font.BOLD, 24f));
+        title.setForeground(UiStyle.ECHO);
 
         JTextField usernameField = new JTextField();
         JPasswordField passwordField = new JPasswordField();
         JButton loginButton = new JButton("Login");
         JButton backButton = new JButton("Back");
 
+        UiStyle.styleField(usernameField);
+        UiStyle.styleField(passwordField);
+        UiStyle.styleButton(loginButton, true);
+        UiStyle.styleButton(backButton, false);
+
         form.add(title);
-        form.add(new JLabel("Username"));
+        form.add(UiStyle.label("Username"));
         form.add(usernameField);
-        form.add(new JLabel("Password"));
+        form.add(UiStyle.label("Password"));
         form.add(passwordField);
         form.add(loginButton);
         form.add(backButton);

@@ -2,7 +2,7 @@ package com.ap.chickeninvaders.model;
 
 import java.awt.*;
 
-public class Enemy {
+public abstract class Enemy {
     private double x;
     private double y;
     private final int width = 42;
@@ -11,16 +11,13 @@ public class Enemy {
     private final int maxHealth;
     private int health;
     private boolean settled;
-    private double zigzagPhase;
-    private double fastOffset;
-    private int fastDirection = 1;
     private int hitFlashFrames;
 
-    public Enemy(Cell cell, int level) {
+    protected Enemy(Cell cell, int level) {
         this(cell, cell.getX(), cell.getY(), level, true);
     }
 
-    public Enemy(Cell cell, double spawnX, double spawnY, int level) {
+    protected Enemy(Cell cell, double spawnX, double spawnY, int level) {
         this(cell, spawnX, spawnY, level, false);
     }
 
@@ -33,7 +30,32 @@ public class Enemy {
         this.health = maxHealth;
     }
 
-    public void update(double formationSpeed) {
+    public static Enemy create(Cell cell, int level) {
+        return createByType(cell, cell.getX(), cell.getY(), level, false);
+    }
+
+    public static Enemy createReplacement(Cell cell, double spawnX, double spawnY, int level) {
+        return createByType(cell, spawnX, spawnY, level, true);
+    }
+
+    private static Enemy createByType(Cell cell, double x, double y, int level, boolean replacement) {
+        return switch (cell.getEnemyType()) {
+            case NORMAL -> replacement
+                    ? new NormalEnemy(cell, x, y, level)
+                    : new NormalEnemy(cell, level);
+            case FAST -> replacement
+                    ? new FastEnemy(cell, x, y, level)
+                    : new FastEnemy(cell, level);
+            case ZIGZAG -> replacement
+                    ? new ZigzagEnemy(cell, x, y, level)
+                    : new ZigzagEnemy(cell, level);
+            case SHOOTER -> replacement
+                    ? new ShooterEnemy(cell, x, y, level)
+                    : new ShooterEnemy(cell, level);
+        };
+    }
+
+    public final void update(double formationSpeed) {
         if (hitFlashFrames > 0) {
             hitFlashFrames--;
         }
@@ -43,84 +65,89 @@ public class Enemy {
             return;
         }
 
-        x = cell.getX();
-        y = cell.getY();
-
-        if (getType() == EnemyType.FAST) {
-            fastOffset += fastDirection * Math.max(2.0, formationSpeed * 2.0);
-            if (Math.abs(fastOffset) >= 12) {
-                fastOffset = Math.copySign(12, fastOffset);
-                fastDirection *= -1;
-            }
-            x += fastOffset;
-        } else if (getType() == EnemyType.ZIGZAG) {
-            zigzagPhase += 0.18;
-            y += Math.sin(zigzagPhase) * 8;
-        }
+        x = cell.getX() + settledXOffset(formationSpeed);
+        y = cell.getY() + settledYOffset(formationSpeed);
     }
 
     private void moveTowardCell() {
-        double targetX = cell.getX();
-        double targetY = cell.getY();
-        double dx = targetX - x;
-        double dy = targetY - y;
-        double distance = Math.hypot(dx, dy);
-        double spawnSpeed = 6.0;
-
-        if (distance <= spawnSpeed) {
-            x = targetX;
-            y = targetY;
+        double centerDx = cell.getX() - x;
+        double centerDy = cell.getY() - y;
+        if (Math.abs(centerDy) <= 7 && Math.abs(centerDx) <= 28) {
+            x = cell.getX();
+            y = cell.getY();
             settled = true;
             return;
         }
 
+        double targetX = cell.getX() + spawnTargetXOffset();
+        double targetY = cell.getY() + spawnTargetYOffset();
+        double dx = targetX - x;
+        double dy = targetY - y;
+        double distance = Math.max(1, Math.hypot(dx, dy));
+        double spawnSpeed = 6.0;
         x += dx / distance * spawnSpeed;
         y += dy / distance * spawnSpeed;
     }
 
-    public boolean damage(int amount) {
+    protected double settledXOffset(double formationSpeed) {
+        return 0;
+    }
+
+    protected double settledYOffset(double formationSpeed) {
+        return 0;
+    }
+
+    protected double spawnTargetXOffset() {
+        return 0;
+    }
+
+    protected double spawnTargetYOffset() {
+        return 0;
+    }
+
+    public final boolean damage(int amount) {
         health = Math.max(0, health - amount);
         hitFlashFrames = 5;
         return health == 0;
     }
 
-    public Rectangle getBounds() {
+    public final Rectangle getBounds() {
         return new Rectangle((int) Math.round(x), (int) Math.round(y), width, height);
     }
 
-    public int centerX() {
+    public final int centerX() {
         return (int) Math.round(x) + width / 2;
     }
 
-    public int centerY() {
+    public final int centerY() {
         return (int) Math.round(y) + height / 2;
     }
 
-    public int getScore() {
+    public final int getScore() {
         return getType().getScore();
     }
 
-    public EnemyType getType() {
+    public final EnemyType getType() {
         return cell.getEnemyType();
     }
 
-    public Cell getCell() {
+    public final Cell getCell() {
         return cell;
     }
 
-    public int getHealth() {
+    public final int getHealth() {
         return health;
     }
 
-    public int getMaxHealth() {
+    public final int getMaxHealth() {
         return maxHealth;
     }
 
-    public boolean isSettled() {
+    public final boolean isSettled() {
         return settled;
     }
 
-    public void draw(Graphics2D g) {
+    public final void draw(Graphics2D g) {
         int drawX = (int) Math.round(x);
         int drawY = (int) Math.round(y);
 
@@ -129,11 +156,9 @@ public class Enemy {
 
         g.setColor(new Color(255, 80, 60));
         g.fillOval(drawX + 14, drawY - 8, 14, 14);
-
         g.setColor(Color.BLACK);
         g.fillOval(drawX + 10, drawY + 12, 5, 5);
         g.fillOval(drawX + 27, drawY + 12, 5, 5);
-
         g.setColor(new Color(255, 170, 80));
         g.fillPolygon(
                 new int[]{drawX + width / 2 - 5, drawX + width / 2 + 5, drawX + width / 2},

@@ -170,6 +170,17 @@ Added the project's original feature and completed final delivery:
 - All four saved sound switches continue to work independently
 - Added `ChickenInvaders.jar` and `run.bat` for easy execution
 
+## Final Rubric Fixes
+
+- Refactored `Enemy` into an abstract base class with `NormalEnemy`, `FastEnemy`, `ZigzagEnemy`, and `ShooterEnemy`
+- Refactored `Boss` into an abstract base class with `BossLevel4` and `BossLevel8`
+- Zigzag replacement enemies now fly along a wave path into their cells
+- Fast enemies move horizontally at twice the formation speed around their cells
+- Shooter enemies fire horizontal projectiles at 5 pixels per frame
+- Final boss now accelerates, changes direction occasionally, and moves vertically across a 100-pixel range
+- Background music now starts in the initial menu before login and follows saved user settings after login
+- Added a shared Echo Squadron UI theme for menus, forms, settings, scores, and help screens
+
 ## Project Structure
 
 - `src/com/ap/chickeninvaders`: application entry point

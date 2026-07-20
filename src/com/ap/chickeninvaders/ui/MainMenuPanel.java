@@ -8,14 +8,14 @@ import java.awt.*;
 public class MainMenuPanel extends JPanel {
     public MainMenuPanel(GameMain app) {
         setLayout(new GridBagLayout());
-        setBackground(new Color(12, 14, 34));
+        setBackground(UiStyle.BACKGROUND);
 
         JPanel buttons = new JPanel(new GridLayout(0, 1, 10, 10));
         buttons.setOpaque(false);
         buttons.setPreferredSize(new Dimension(380, 390));
 
         JLabel title = new JLabel("Chicken Invaders: Echo Squadron", SwingConstants.CENTER);
-        title.setForeground(Color.WHITE);
+        title.setForeground(UiStyle.ECHO);
         title.setFont(title.getFont().deriveFont(Font.BOLD, 26f));
 
         JButton newGame = new JButton("New Game");
@@ -25,6 +25,14 @@ public class MainMenuPanel extends JPanel {
         JButton settings = new JButton("Settings");
         JButton howToPlay = new JButton("How to Play");
         JButton exit = new JButton("Exit");
+
+        UiStyle.styleButton(newGame, true);
+        UiStyle.styleButton(login, false);
+        UiStyle.styleButton(register, false);
+        UiStyle.styleButton(highScores, false);
+        UiStyle.styleButton(settings, false);
+        UiStyle.styleButton(howToPlay, false);
+        UiStyle.styleButton(exit, false);
 
         newGame.addActionListener(e -> app.startNewGame());
         login.addActionListener(e -> app.showScreen("login"));

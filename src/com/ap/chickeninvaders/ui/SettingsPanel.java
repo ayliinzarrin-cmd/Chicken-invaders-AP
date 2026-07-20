@@ -16,17 +16,27 @@ public class SettingsPanel extends JPanel {
     public SettingsPanel(GameMain app) {
         this.app = app;
         setLayout(new GridBagLayout());
-        setBackground(new Color(10, 14, 30));
+        setBackground(UiStyle.BACKGROUND);
 
         JPanel form = new JPanel(new GridLayout(0, 1, 10, 10));
         form.setPreferredSize(new Dimension(320, 280));
+        UiStyle.stylePanel(form);
 
         JLabel title = new JLabel("Sound Settings", SwingConstants.CENTER);
         title.setFont(title.getFont().deriveFont(Font.BOLD, 24f));
+        title.setForeground(UiStyle.ECHO);
 
         JButton saveButton = new JButton("Save Settings");
         JButton testButton = new JButton("Test Sound");
         JButton backButton = new JButton("Back");
+
+        for (JCheckBox box : new JCheckBox[]{musicBox, shotBox, explosionBox, endBox}) {
+            box.setOpaque(false);
+            box.setForeground(UiStyle.TEXT);
+        }
+        UiStyle.styleButton(saveButton, true);
+        UiStyle.styleButton(testButton, false);
+        UiStyle.styleButton(backButton, false);
 
         form.add(title);
         form.add(musicBox);
@@ -79,4 +89,3 @@ public class SettingsPanel extends JPanel {
         JOptionPane.showMessageDialog(this, "Sound settings saved.");
     }
 }
-

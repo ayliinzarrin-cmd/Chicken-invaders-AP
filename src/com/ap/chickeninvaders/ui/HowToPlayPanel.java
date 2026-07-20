@@ -8,11 +8,11 @@ import java.awt.*;
 public class HowToPlayPanel extends JPanel {
     public HowToPlayPanel(GameMain app) {
         setLayout(new BorderLayout(16, 16));
-        setBackground(new Color(10, 14, 30));
+        setBackground(UiStyle.BACKGROUND);
         setBorder(BorderFactory.createEmptyBorder(24, 40, 24, 40));
 
         JLabel title = new JLabel("How to Play", SwingConstants.CENTER);
-        title.setForeground(Color.WHITE);
+        title.setForeground(UiStyle.ECHO);
         title.setFont(title.getFont().deriveFont(Font.BOLD, 28f));
         add(title, BorderLayout.NORTH);
 
@@ -29,6 +29,7 @@ public class HowToPlayPanel extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
 
         JButton backButton = new JButton("Back to Menu");
+        UiStyle.styleButton(backButton, false);
         backButton.addActionListener(e -> app.showScreen("menu"));
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         bottom.setOpaque(false);

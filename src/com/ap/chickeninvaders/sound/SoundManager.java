@@ -25,6 +25,10 @@ public class SoundManager {
     private volatile User user;
     private volatile int musicGeneration;
 
+    public SoundManager() {
+        refreshBackgroundMusic();
+    }
+
     public synchronized void setUser(User user) {
         this.user = user;
         refreshBackgroundMusic();
@@ -59,7 +63,7 @@ public class SoundManager {
     }
 
     public void playMenuBeep() {
-        if (user != null && user.isMusicOn()) {
+        if (user == null || user.isMusicOn()) {
             effects.submit(() -> {
                 playTone(440, 660, 120, 0.13);
                 playTone(660, 880, 120, 0.13);
@@ -78,7 +82,7 @@ public class SoundManager {
 
     private synchronized void refreshBackgroundMusic() {
         int generation = ++musicGeneration;
-        if (user == null || !user.isMusicOn()) {
+        if (user != null && !user.isMusicOn()) {
             return;
         }
 
@@ -104,7 +108,7 @@ public class SoundManager {
 
     private boolean isMusicEnabled() {
         User currentUser = user;
-        return currentUser != null && currentUser.isMusicOn();
+        return currentUser == null || currentUser.isMusicOn();
     }
 
     private void playTone(double startFrequency, double endFrequency, int durationMs, double volume) {

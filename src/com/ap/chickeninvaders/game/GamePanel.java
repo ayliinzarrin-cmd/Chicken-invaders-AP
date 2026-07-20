@@ -81,7 +81,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         lastShooterTime = lastEggTime;
 
         if (level == 4 || level == 8) {
-            boss = new Boss(level);
+            boss = Boss.create(level);
             return;
         }
 
@@ -100,7 +100,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                         enemyCount
                 );
                 cells.add(cell);
-                enemies.add(new Enemy(cell, level));
+                enemies.add(Enemy.create(cell, level));
             }
         }
     }
@@ -210,6 +210,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void recordEchoSnapshot(long now, boolean shot) {
+        // Keep only the rolling five-second window used by Echo Squadron.
         echoHistory.addLast(new PlayerSnapshot(
                 now,
                 plane.getX(),
@@ -307,14 +308,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             for (Enemy enemy : enemies) {
                 if (enemy.isSettled() && enemy.getType() == EnemyType.SHOOTER
                         && random.nextDouble() < 0.08) {
-                    double aimX = plane.getBounds().getCenterX() - enemy.centerX();
-                    double aimY = plane.getBounds().getCenterY() - enemy.centerY();
-                    double length = Math.max(1, Math.hypot(aimX, aimY));
+                    double horizontalSpeed = plane.getBounds().getCenterX() >= enemy.centerX() ? 5 : -5;
                     eggs.add(new Egg(
                             enemy.centerX(),
                             enemy.centerY(),
-                            aimX / length * 5,
-                            aimY / length * 5
+                            horizontalSpeed,
+                            0
                     ));
                 }
             }
@@ -411,7 +410,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private Enemy createReplacement(Cell cell) {
         int panelWidth = getWidth() > 0 ? getWidth() : 800;
         double spawnX = random.nextBoolean() ? -55 : panelWidth + 15;
-        return new Enemy(cell, spawnX, 15, level);
+        return Enemy.createReplacement(cell, spawnX, 15, level);
     }
 
     private void checkBulletBossCollisions() {

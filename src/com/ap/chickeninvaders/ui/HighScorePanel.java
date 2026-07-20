@@ -16,11 +16,11 @@ public class HighScorePanel extends JPanel {
     public HighScorePanel(GameMain app) {
         this.app = app;
         setLayout(new BorderLayout(16, 16));
-        setBackground(new Color(10, 14, 30));
+        setBackground(UiStyle.BACKGROUND);
         setBorder(BorderFactory.createEmptyBorder(28, 36, 28, 36));
 
         JLabel title = new JLabel("High Scores", SwingConstants.CENTER);
-        title.setForeground(Color.WHITE);
+        title.setForeground(UiStyle.ECHO);
         title.setFont(title.getFont().deriveFont(Font.BOLD, 28f));
         add(title, BorderLayout.NORTH);
 
@@ -36,6 +36,13 @@ public class HighScorePanel extends JPanel {
         table.setRowHeight(30);
         table.setFillsViewportHeight(true);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setBackground(UiStyle.PANEL);
+        table.setForeground(UiStyle.TEXT);
+        table.setSelectionBackground(UiStyle.ACCENT);
+        table.setSelectionForeground(Color.BLACK);
+        table.setGridColor(new Color(80, 85, 105));
+        table.getTableHeader().setBackground(UiStyle.PANEL_LIGHT);
+        table.getTableHeader().setForeground(UiStyle.TEXT);
         table.getTableHeader().setReorderingAllowed(false);
         table.getColumnModel().getColumn(0).setPreferredWidth(45);
         table.getColumnModel().getColumn(1).setPreferredWidth(120);
@@ -49,6 +56,8 @@ public class HighScorePanel extends JPanel {
 
         JButton refreshButton = new JButton("Refresh");
         JButton backButton = new JButton("Back to Menu");
+        UiStyle.styleButton(refreshButton, true);
+        UiStyle.styleButton(backButton, false);
         refreshButton.addActionListener(e -> refreshScores());
         backButton.addActionListener(e -> app.showScreen("menu"));
 
